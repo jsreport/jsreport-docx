@@ -22,14 +22,14 @@ describe('docx', () => {
 
   afterEach(() => reporter.close())
 
-  it('should produce word with replaced tags', async () => {
+  it('variable-replace', async () => {
     const result = await reporter.render({
       template: {
         engine: 'handlebars',
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'template.docx'))
+            content: fs.readFileSync(path.join(__dirname, 'variable-replace.docx'))
           }
         }
       },
@@ -38,15 +38,116 @@ describe('docx', () => {
       }
     })
 
+    fs.writeFileSync('out.docx', result.content)
     const text = await textract('test.docx', result.content)
     text.should.containEql('Hello world John')
   })
 
+  it('variable-replace', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'list.docx'))
+          }
+        }
+      },
+      data: {
+        people: [{
+          name: 'Jan'
+        }, {
+          name: 'Boris'
+        }, {
+          name: 'Pavel'
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('Jan')
+    text.should.containEql('Boris')
+  })
+
+  it('loop', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'loop.docx'))
+          }
+        }
+      },
+      data: {
+        chapters: [{
+          title: 'Chapter 1',
+          text: 'This is the first chapter'
+        }, {
+          title: 'Chapter 2',
+          text: 'This is the second chapter'
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('Chapter 1')
+    text.should.containEql('This is the first chapter')
+    text.should.containEql('Chapter 2')
+    text.should.containEql('This is the second chapter')
+  })
+
+  it('complex', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'complex.docx'))
+          }
+        }
+      },
+      data: {
+        name: 'Jan Blaha',
+        email: 'jan.blaha@jsreport.net',
+        phone: '+420777271254',
+        description: `I am software developer, software architect and consultant with over 8 years of professional
+        experience working on projects for cross domain market leaders. My experience covers custom
+        projects for big costumers in the banking or electricity domain as well as cloud based SaaS startups.`,
+        experiences: [{
+          title: '.NET Developer',
+          company: 'Unicorn',
+          from: '1.1.2010',
+          to: '15.5.2012'
+        }, {
+          title: 'Solution Architect',
+          company: 'Simplias',
+          from: '15.5.2012',
+          to: 'now'
+        }],
+        skills: [{
+          title: 'The worst developer ever'
+        }, {
+          title: `Don't need to write semicolons`
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('Jan Blaha')
+  })
+
   it('should be able to reference stored asset', async () => {
     await reporter.documentStore.collection('assets').insert({
-      name: 'template.docx',
+      name: 'variable-replace.docx',
       shortid: 'template',
-      content: fs.readFileSync(path.join(__dirname, 'template.docx'))
+      content: fs.readFileSync(path.join(__dirname, 'variable-replace.docx'))
     })
     const result = await reporter.render({
       template: {
@@ -72,7 +173,7 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'template.docx'))
+            content: fs.readFileSync(path.join(__dirname, 'variable-replace.docx'))
           }
         }
       },
@@ -112,7 +213,7 @@ describe('docx with extensions.docx.previewInWordOnline === false', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'template.docx'))
+            content: fs.readFileSync(path.join(__dirname, 'variable-replace.docx'))
           }
         }
       },
