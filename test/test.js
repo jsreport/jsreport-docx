@@ -43,7 +43,7 @@ describe('docx', () => {
     text.should.containEql('Hello world John')
   })
 
-  it('variable-replace', async () => {
+  it('list', async () => {
     const result = await reporter.render({
       template: {
         engine: 'handlebars',
@@ -69,6 +69,51 @@ describe('docx', () => {
     const text = await textract('test.docx', result.content)
     text.should.containEql('Jan')
     text.should.containEql('Boris')
+  })
+
+  it('table', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table.docx'))
+          }
+        }
+      },
+      data: {
+        people: [{
+          name: 'Jan', email: 'jan.blaha@foo.com'
+        }, {
+          name: 'Boris', email: 'boris@foo.met'
+        }, {
+          name: 'Pavel', email: 'pavel@foo.met'
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('Jan')
+    text.should.containEql('Boris')
+  })
+
+  it.only('style', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'style.docx'))
+          }
+        }
+      },
+      data: {}
+    })
+
+    fs.writeFileSync('out.docx', result.content)
   })
 
   it('loop', async () => {
@@ -110,7 +155,12 @@ describe('docx', () => {
           templateAsset: {
             content: fs.readFileSync(path.join(__dirname, 'complex.docx'))
           }
-        }
+        },
+        helpers: `
+          function customHelper(options) {
+            return options.fn(this)
+          }
+        `
       },
       data: {
         name: 'Jan Blaha',
@@ -134,7 +184,8 @@ describe('docx', () => {
           title: 'The worst developer ever'
         }, {
           title: `Don't need to write semicolons`
-        }]
+        }],
+        printFooter: true
       }
     })
 
