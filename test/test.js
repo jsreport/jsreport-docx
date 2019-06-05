@@ -11,7 +11,8 @@ describe('docx', () => {
   beforeEach(() => {
     reporter = jsreport({
       templatingEngines: {
-        strategy: 'in-process'
+        strategy: 'in-process',
+        timeout: 999999999999999
       }
     }).use(require('../')())
       .use(require('jsreport-handlebars')())
@@ -99,7 +100,7 @@ describe('docx', () => {
     text.should.containEql('Boris')
   })
 
-  it.only('style', async () => {
+  it('style', async () => {
     const result = await reporter.render({
       template: {
         engine: 'handlebars',

@@ -9,8 +9,8 @@
   global.docxTable = function (data, options) {
     return Handlebars.helpers.each(data, options)
   }
-  global.docxStyle = function (context, options) {
-    return options.fn(context)
+  global.docxStyle = function (options) {
+    return `<docxStyleStart textColor="${options.hash.textColor}" />${options.fn(this)}<docxStyleEnd/>`
   }
   /* return Handlebars.SafeString(
       `<docxList><data>${JSON.stringify(data)}</data></docxList>${Handlebars.Utils.escapeExpression(options.fn())}<docxListEnd/>`
