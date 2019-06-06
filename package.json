@@ -19,6 +19,7 @@
     "docx"
   ],
   "scripts": {
+    "start": "jsreport-studio-start --httpPort 3000",
     "test": "mocha test --timeout 8000 && standard",
     "build": "jsreport-studio-build",
     "prepublishOnly": "jsreport-studio-build"
