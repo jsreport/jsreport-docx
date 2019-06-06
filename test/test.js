@@ -117,6 +117,25 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
   })
 
+  it('image', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'image.docx'))
+          }
+        }
+      },
+      data: {
+        src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+  })
+
   it('loop', async () => {
     const result = await reporter.render({
       template: {

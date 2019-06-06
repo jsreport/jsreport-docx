@@ -41,6 +41,7 @@
     "bluebird": "3.5.5",
     "form-data": "2.3.3",
     "get-stream": "5.1.0",
+    "image-size": "0.7.4",
     "jszip": "3.2.1",
     "pify": "4.0.1",
     "stream-to-array": "2.3.0",

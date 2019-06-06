@@ -12,6 +12,10 @@
   global.docxStyle = function (options) {
     return `<docxStyleStart textColor="${options.hash.textColor}" />${options.fn(this)}<docxStyleEnd/>`
   }
+
+  global.docxImage = function (options) {
+    return `<docxImage src="${options.hash.src}" />` + options.fn(this)
+  }
   /* return Handlebars.SafeString(
       `<docxList><data>${JSON.stringify(data)}</data></docxList>${Handlebars.Utils.escapeExpression(options.fn())}<docxListEnd/>`
     ) */
