@@ -46,6 +46,7 @@
     "jszip": "3.2.1",
     "pify": "4.0.1",
     "stream-to-array": "2.3.0",
+    "xmldom": "0.1.27",
     "yauzl": "2.10.0"
   },
   "devDependencies": {
