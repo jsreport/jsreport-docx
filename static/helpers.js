@@ -14,9 +14,14 @@
   }
 
   global.docxImage = function (options) {
+    if (!options.hash.src) {
+      throw new Error('docxImage helper requires src parameter to be set')
+    }
+
+    if (!options.hash.src.startsWith('data:image/png;base64,') && !options.hash.src.startsWith('data:image/jpeg;base64,')) {
+      throw new Error('docxImage helper requires src parameter to be valid data uri for png or jpeg image. got ' + options.hash.src)
+    }
+
     return `<docxImage src="${options.hash.src}" />` + options.fn(this)
   }
-  /* return Handlebars.SafeString(
-      `<docxList><data>${JSON.stringify(data)}</data></docxList>${Handlebars.Utils.escapeExpression(options.fn())}<docxListEnd/>`
-    ) */
 })(this)

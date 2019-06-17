@@ -136,6 +136,40 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
   })
 
+  it('image error message when no src provided', async () => {
+    return reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'image.docx'))
+          }
+        }
+      },
+      data: {
+        src: null
+      }
+    }).should.be.rejectedWith(/src parameter to be set/)
+  })
+
+  it('image error message when src not valid param', async () => {
+    return reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'image.docx'))
+          }
+        }
+      },
+      data: {
+        src: 'data:image/gif;base64,R0lG'
+      }
+    }).should.be.rejectedWith(/docxImage helper requires src parameter to be valid data uri/)
+  })
+
   it('loop', async () => {
     const result = await reporter.render({
       template: {
