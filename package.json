@@ -67,7 +67,8 @@
     "lib",
     "studio",
     "index.js",
-    "jsreport.config.js"
+    "jsreport.config.js",
+    "static"
   ],
   "engines": {
     "node": ">=8.9"
