@@ -44,6 +44,106 @@ describe('docx', () => {
     text.should.containEql('Hello world John')
   })
 
+  it('invoice', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'invoice.docx'))
+          }
+        }
+      },
+      data: {
+        invoiceNumber: 'T-123',
+        company: {
+          address: 'Prague 345',
+          email: 'foo',
+          phone: 'phone'
+        },
+        total: 1000,
+        date: 'dddd',
+        items: [{
+          product: {
+            name: 'jsreport',
+            price: 11
+          },
+          quantity: 10,
+          cost: 20
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('T-123')
+    text.should.containEql('jsreport')
+    text.should.containEql('Prague 345')
+  })
+
+  it('footnote', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'foot-note.docx'))
+          }
+        }
+      },
+      data: {
+        value: 'footnotevalue'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('footnotevalue')
+  })
+
+  it('link', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'link.docx'))
+          }
+        }
+      },
+      data: {
+        url: 'https://jsreport.net'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('website')
+  })
+
+  it('watermark', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'watermark.docx'))
+          }
+        }
+      },
+      data: {
+        watermark: 'replacedvalue'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    // text parser is not parsing watermarks
+  })
+
   it('list', async () => {
     const result = await reporter.render({
       template: {
