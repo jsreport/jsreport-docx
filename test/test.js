@@ -11,8 +11,7 @@ describe('docx', () => {
   beforeEach(() => {
     reporter = jsreport({
       templatingEngines: {
-        strategy: 'in-process',
-        timeout: 999999999999999
+        strategy: 'in-process'
       }
     }).use(require('../')())
       .use(require('jsreport-handlebars')())
@@ -22,6 +21,32 @@ describe('docx', () => {
   })
 
   afterEach(() => reporter.close())
+
+  it('condition-with-helper-call', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'condition-with-helper-call.docx'))
+          }
+        },
+        helpers: `
+          function moreThan2(users) {
+            return users.length > 2
+          }
+        `
+      },
+      data: {
+        users: [1, 2, 3]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('More than 2 users')
+  })
 
   it('variable-replace', async () => {
     const result = await reporter.render({
