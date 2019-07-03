@@ -22,6 +22,6 @@
       throw new Error('docxImage helper requires src parameter to be valid data uri for png or jpeg image. got ' + options.hash.src)
     }
 
-    return `<docxImage src="${options.hash.src}" />` + options.fn(this)
+    return JSON.stringify({ src: options.hash.src })
   }
 })(this)
