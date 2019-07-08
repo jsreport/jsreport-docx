@@ -44,6 +44,7 @@
     "get-stream": "5.1.0",
     "image-size": "0.7.4",
     "jszip": "3.2.1",
+    "node.extend.without.arrays": "1.1.6",
     "pify": "4.0.1",
     "stream-to-array": "2.3.0",
     "xmldom": "0.1.27",
