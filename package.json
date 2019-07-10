@@ -43,6 +43,7 @@
     "form-data": "2.4.0",
     "get-stream": "5.1.0",
     "image-size": "0.7.4",
+    "jsreport-office": "github:jsreport/jsreport-office",
     "jszip": "3.2.1",
     "node.extend.without.arrays": "1.1.6",
     "pify": "4.0.1",

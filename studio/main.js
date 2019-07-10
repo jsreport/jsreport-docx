@@ -128,11 +128,11 @@ _jsreportStudio2.default.previewListeners.push(function (request, entities) {
     return;
   }
 
-  if (_jsreportStudio2.default.extensions.docx.options.showOfficeOnlineWarning === false) {
+  if (_jsreportStudio2.default.extensions.docx.options.preview.enabled === false) {
     return;
   }
 
-  if (_jsreportStudio2.default.extensions.docx.options.previewInOfficeOnline === false) {
+  if (_jsreportStudio2.default.extensions.docx.options.preview.showWarning === false) {
     return;
   }
 

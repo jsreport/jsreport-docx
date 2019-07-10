@@ -1,19 +1,8 @@
-const schema = {
-  type: 'object',
-  properties: {
-    previewInOfficeOnline: { type: 'boolean' },
-    publicUriForPreview: { type: 'string' },
-    showOfficeOnlineWarning: { type: 'boolean', default: true }
-  }
-}
+const office = require('jsreport-office')
 
 module.exports = {
   'name': 'docx',
   'main': 'lib/docx.js',
-  'optionsSchema': {
-    extensions: {
-      docx: { ...schema }
-    }
-  },
+  'optionsSchema': office.extendSchema('docx', {}),
   'dependencies': []
 }

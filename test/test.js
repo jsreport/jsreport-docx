@@ -427,7 +427,7 @@ describe('docx with extensions.docx.previewInWordOnline === false', () => {
       templatingEngines: {
         strategy: 'in-process'
       }
-    }).use(require('../')({ previewInOfficeOnline: false }))
+    }).use(require('../')({ preview: { enabled: false } }))
       .use(require('jsreport-handlebars')())
       .use(require('jsreport-templates')())
       .use(require('jsreport-assets')())
