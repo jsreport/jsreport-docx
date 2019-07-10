@@ -20,7 +20,7 @@ Studio.previewListeners.push((request, entities) => {
     return
   }
 
-  if (Studio.extensions.xlsx.options.showOfficeOnlineWarning === false) {
+  if (Studio.extensions.docx.options.showOfficeOnlineWarning === false) {
     return
   }
 

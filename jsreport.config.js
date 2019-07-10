@@ -6,6 +6,7 @@ const schema = {
     showOfficeOnlineWarning: { type: 'boolean', default: true }
   }
 }
+
 module.exports = {
   'name': 'docx',
   'main': 'lib/docx.js',
