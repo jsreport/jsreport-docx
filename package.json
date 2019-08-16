@@ -38,7 +38,7 @@
   "license": "MIT",
   "dependencies": {
     "image-size": "0.7.4",
-    "jsreport-office": "0.2.0",
+    "jsreport-office": "1.0.0",
     "node.extend.without.arrays": "1.1.6",
     "xmldom": "0.1.27"
   },
@@ -49,7 +49,7 @@
     "jsreport-assets": "1.1.4",
     "jsreport-core": "2.5.0",
     "jsreport-handlebars": "2.0.2",
-    "jsreport-studio-dev": "1.4.0",
+    "jsreport-studio-dev": "github:jsreport/jsreport-studio-dev",
     "jsreport-templates": "2.2.0",
     "mocha": "6.1.4",
     "should": "13.2.3",

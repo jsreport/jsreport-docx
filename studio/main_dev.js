@@ -3,6 +3,26 @@ import Studio from 'jsreport-studio'
 
 Studio.addPropertiesComponent(Properties.title, Properties, (entity) => entity.__entitySet === 'templates' && entity.recipe === 'docx')
 
+Studio.entityEditorComponentKeyResolvers.push((entity) => {
+  if (entity.__entitySet === 'templates' && entity.recipe === 'docx') {
+    let officeAsset
+
+    if (entity.docx != null && entity.docx.templateAssetShortid != null) {
+      officeAsset = Studio.getEntityByShortid(entity.docx.templateAssetShortid, false)
+    }
+
+    return {
+      key: 'officeAsset',
+      entity: officeAsset,
+      props: {
+        icon: 'fa-link',
+        displayName: `docx asset: ${officeAsset != null ? officeAsset.name : '<none>'}`,
+        emptyMessage: 'No docx asset assigned, please add a reference to a docx asset in the properties'
+      }
+    }
+  }
+})
+
 Studio.addApiSpec({
   template: {
     docx: {

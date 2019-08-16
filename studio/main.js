@@ -111,6 +111,26 @@ _jsreportStudio2.default.addPropertiesComponent(_DocxProperties2.default.title, 
   return entity.__entitySet === 'templates' && entity.recipe === 'docx';
 });
 
+_jsreportStudio2.default.entityEditorComponentKeyResolvers.push(function (entity) {
+  if (entity.__entitySet === 'templates' && entity.recipe === 'docx') {
+    var officeAsset = void 0;
+
+    if (entity.docx != null && entity.docx.templateAssetShortid != null) {
+      officeAsset = _jsreportStudio2.default.getEntityByShortid(entity.docx.templateAssetShortid, false);
+    }
+
+    return {
+      key: 'officeAsset',
+      entity: officeAsset,
+      props: {
+        icon: 'fa-link',
+        displayName: 'docx asset: ' + (officeAsset != null ? officeAsset.name : '<none>'),
+        emptyMessage: 'No docx asset assigned, please add a reference to a docx asset in the properties'
+      }
+    };
+  }
+});
+
 _jsreportStudio2.default.addApiSpec({
   template: {
     docx: {
