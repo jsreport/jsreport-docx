@@ -12,7 +12,7 @@ Studio.entityEditorComponentKeyResolvers.push((entity) => {
     }
 
     return {
-      key: 'officeAsset',
+      key: 'assets',
       entity: officeAsset,
       props: {
         icon: 'fa-link',

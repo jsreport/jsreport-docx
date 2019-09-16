@@ -120,7 +120,7 @@ _jsreportStudio2.default.entityEditorComponentKeyResolvers.push(function (entity
     }
 
     return {
-      key: 'officeAsset',
+      key: 'assets',
       entity: officeAsset,
       props: {
         icon: 'fa-link',
