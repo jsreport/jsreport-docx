@@ -17,7 +17,7 @@ Studio.entityEditorComponentKeyResolvers.push((entity) => {
       props: {
         icon: 'fa-link',
         embeddingCode: '',
-        showHelp: false,
+        helpersEntity: entity,
         displayName: `docx asset: ${officeAsset != null ? officeAsset.name : '<none>'}`,
         emptyMessage: 'No docx asset assigned, please add a reference to a docx asset in the properties'
       }
