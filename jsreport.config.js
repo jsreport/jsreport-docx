@@ -14,5 +14,5 @@ module.exports = {
       }
     }
   }),
-  'dependencies': []
+  'dependencies': ['assets']
 }
