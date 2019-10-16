@@ -1,4 +1,4 @@
-require('should')
+const should = require('should')
 const jsreport = require('jsreport-core')
 const fs = require('fs')
 const path = require('path')
@@ -93,6 +93,51 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
     const text = await textract('test.docx', result.content)
     text.should.containEql('Hello world John')
+  })
+
+  it('variable-replace-multi', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'variable-replace-multi.docx'))
+          }
+        }
+      },
+      data: {
+        name: 'John',
+        lastname: 'Wick'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('Hello world John developer Another lines John developer with Wick as lastname')
+  })
+
+  it('variable-replace-syntax-error', () => {
+    const prom = reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'variable-replace-syntax-error.docx'))
+          }
+        }
+      },
+      data: {
+        name: 'John'
+      }
+    })
+
+    return Promise.all([
+      should(prom).be.rejectedWith(/Parse error/),
+      // this text that error contains proper location of syntax error
+      should(prom).be.rejectedWith(/<w:t>{{<\/w:t>/)
+    ])
   })
 
   it('invoice', async () => {
@@ -221,6 +266,71 @@ describe('docx', () => {
     const text = await textract('test.docx', result.content)
     text.should.containEql('Jan')
     text.should.containEql('Boris')
+  })
+
+  it('variable-replace-and-list-after', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'variable-replace-and-list-after.docx'))
+          }
+        }
+      },
+      data: {
+        name: 'John'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('This is a test John here we go Test 1 Test 2 Test 3')
+  })
+
+  it('variable-replace-and-list-after2', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'variable-replace-and-list-after2.docx'))
+          }
+        }
+      },
+      data: {
+        name: 'John'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('This is a test John here we go Test 1 Test 2 Test 3 This is another test John can you see me here')
+  })
+
+  it('variable-replace-and-list-after-syntax-error', async () => {
+    const prom = reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'variable-replace-and-list-after-syntax-error.docx'))
+          }
+        }
+      },
+      data: {
+        name: 'John'
+      }
+    })
+
+    return Promise.all([
+      should(prom).be.rejectedWith(/Parse error/),
+      // this text that error contains proper location of syntax error
+      should(prom).be.rejectedWith(/<w:t>{{<\/w:t>/)
+    ])
   })
 
   it('table', async () => {
