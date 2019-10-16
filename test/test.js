@@ -48,6 +48,32 @@ describe('docx', () => {
     text.should.containEql('More than 2 users')
   })
 
+  it('condition with docProps/thumbnail.jpeg in docx', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'condition.docx'))
+          }
+        },
+        helpers: `
+          function moreThan2(users) {
+            return users.length > 2
+          }
+        `
+      },
+      data: {
+        users: [1, 2, 3]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('More than 2 users')
+  })
+
   it('variable-replace', async () => {
     const result = await reporter.render({
       template: {
