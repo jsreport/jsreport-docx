@@ -3,6 +3,8 @@ const jsreport = require('jsreport-core')
 const fs = require('fs')
 const path = require('path')
 const util = require('util')
+const { DOMParser } = require('xmldom')
+const { decompress } = require('jsreport-office')
 const textract = util.promisify(require('textract').fromBufferWithName)
 
 describe('docx', () => {
@@ -237,7 +239,15 @@ describe('docx', () => {
     })
 
     fs.writeFileSync('out.docx', result.content)
-    // text parser is not parsing watermarks
+
+    const files = await decompress()(result.content)
+    let header1 = new DOMParser().parseFromString(files.find(f => f.path === 'word/header1.xml').data.toString())
+    let header2 = new DOMParser().parseFromString(files.find(f => f.path === 'word/header2.xml').data.toString())
+    let header3 = new DOMParser().parseFromString(files.find(f => f.path === 'word/header3.xml').data.toString())
+
+    header1.getElementsByTagName('v:shape')[0].getElementsByTagName('v:textpath')[0].getAttribute('string').should.be.eql('replacedvalue')
+    header2.getElementsByTagName('v:shape')[0].getElementsByTagName('v:textpath')[0].getAttribute('string').should.be.eql('replacedvalue')
+    header3.getElementsByTagName('v:shape')[0].getElementsByTagName('v:textpath')[0].getAttribute('string').should.be.eql('replacedvalue')
   })
 
   it('list', async () => {
