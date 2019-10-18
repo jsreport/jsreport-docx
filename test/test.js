@@ -180,6 +180,27 @@ describe('docx', () => {
     text.should.containEql('Prague 345')
   })
 
+  it('endnote', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'end-note.docx'))
+          }
+        }
+      },
+      data: {
+        value: 'endnotevalue'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('endnotevalue')
+  })
+
   it('footnote', async () => {
     const result = await reporter.render({
       template: {
@@ -278,6 +299,93 @@ describe('docx', () => {
     text.should.containEql('Boris')
   })
 
+  it('list and links', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'list-and-links.docx'))
+          }
+        }
+      },
+      data: {
+        items: [{
+          text: 'jsreport',
+          address: 'https://jsreport.net'
+        }, {
+          text: 'github',
+          address: 'https://github.com'
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+
+    text.should.containEql('jsreport')
+    text.should.containEql('github')
+  })
+
+  it('list and endnotes', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'list-and-endnotes.docx'))
+          }
+        }
+      },
+      data: {
+        items: [{
+          name: '1',
+          note: '1n'
+        }, {
+          name: '2',
+          note: '2n'
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+
+    text.should.containEql('note 1n')
+    text.should.containEql('note 2n')
+  })
+
+  it('list and footnotes', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'list-and-footnotes.docx'))
+          }
+        }
+      },
+      data: {
+        items: [{
+          name: '1',
+          note: '1n'
+        }, {
+          name: '2',
+          note: '2n'
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+
+    text.should.containEql('note 1n')
+    text.should.containEql('note 2n')
+  })
+
   it('variable-replace-and-list-after', async () => {
     const result = await reporter.render({
       template: {
@@ -369,6 +477,129 @@ describe('docx', () => {
     const text = await textract('test.docx', result.content)
     text.should.containEql('Jan')
     text.should.containEql('Boris')
+  })
+
+  it('table and links', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table-and-links.docx'))
+          }
+        }
+      },
+      data: {
+        courses: [{
+          name: 'The Open University',
+          description: 'Distance and online courses. Qualifications range from certificates, diplomas and short courses to undergraduate and postgraduate degrees.',
+          linkName: 'Go to the site1',
+          linkURL: 'http://www.openuniversity.edu/courses'
+        }, {
+          name: 'Coursera',
+          description: 'Online courses from top universities like Yale, Michigan, Stanford, and leading companies like Google and IBM.',
+          linkName: 'Go to the site2',
+          linkURL: 'https://plato.stanford.edu/'
+        }, {
+          name: 'edX',
+          description: 'Flexible learning on your schedule. Access more than 1900 online courses from 100+ leading institutions including Harvard, MIT, Microsoft, and more.',
+          linkName: 'Go to the site3',
+          linkURL: 'https://www.edx.org/'
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+
+    text.should.containEql('Go to the site1')
+    text.should.containEql('Go to the site2')
+    text.should.containEql('Go to the site3')
+  })
+
+  it('table and endnotes', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table-and-endnotes.docx'))
+          }
+        }
+      },
+      data: {
+        courses: [{
+          name: 'The Open University',
+          description: 'Distance and online courses. Qualifications range from certificates, diplomas and short courses to undergraduate and postgraduate degrees.',
+          linkName: 'Go to the site1',
+          linkURL: 'http://www.openuniversity.edu/courses',
+          note: 'note site1'
+        }, {
+          name: 'Coursera',
+          description: 'Online courses from top universities like Yale, Michigan, Stanford, and leading companies like Google and IBM.',
+          linkName: 'Go to the site2',
+          linkURL: 'https://plato.stanford.edu/',
+          note: 'note site2'
+        }, {
+          name: 'edX',
+          description: 'Flexible learning on your schedule. Access more than 1900 online courses from 100+ leading institutions including Harvard, MIT, Microsoft, and more.',
+          linkName: 'Go to the site3',
+          linkURL: 'https://www.edx.org/',
+          note: 'note site3'
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+
+    text.should.containEql('note site1')
+    text.should.containEql('note site2')
+    text.should.containEql('note site3')
+  })
+
+  it('table and footnotes', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table-and-footnotes.docx'))
+          }
+        }
+      },
+      data: {
+        courses: [{
+          name: 'The Open University',
+          description: 'Distance and online courses. Qualifications range from certificates, diplomas and short courses to undergraduate and postgraduate degrees.',
+          linkName: 'Go to the site1',
+          linkURL: 'http://www.openuniversity.edu/courses',
+          note: 'note site1'
+        }, {
+          name: 'Coursera',
+          description: 'Online courses from top universities like Yale, Michigan, Stanford, and leading companies like Google and IBM.',
+          linkName: 'Go to the site2',
+          linkURL: 'https://plato.stanford.edu/',
+          note: 'note site2'
+        }, {
+          name: 'edX',
+          description: 'Flexible learning on your schedule. Access more than 1900 online courses from 100+ leading institutions including Harvard, MIT, Microsoft, and more.',
+          linkName: 'Go to the site3',
+          linkURL: 'https://www.edx.org/',
+          note: 'note site3'
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+
+    text.should.containEql('note site1')
+    text.should.containEql('note site2')
+    text.should.containEql('note site3')
   })
 
   it('style', async () => {
