@@ -5,7 +5,21 @@ const path = require('path')
 const util = require('util')
 const { DOMParser } = require('xmldom')
 const { decompress } = require('jsreport-office')
+const sizeOf = require('image-size')
 const textract = util.promisify(require('textract').fromBufferWithName)
+const { pxToEMU, cmToEMU } = require('../lib/utils')
+
+async function getImageSize (buf) {
+  const files = await decompress()(buf)
+  const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+  const elDrawing = doc.getElementsByTagName('w:drawing')[0]
+  const wpExtendEl = elDrawing.getElementsByTagName('wp:extent')[0]
+
+  return {
+    width: parseFloat(wpExtendEl.getAttribute('cx')),
+    height: parseFloat(wpExtendEl.getAttribute('cy'))
+  }
+}
 
 describe('docx', () => {
   let reporter
@@ -620,6 +634,14 @@ describe('docx', () => {
   })
 
   it('image', async () => {
+    const imageBuf = fs.readFileSync(path.join(__dirname, 'image.png'))
+    const imageDimensions = sizeOf(imageBuf)
+
+    const targetImageSize = {
+      width: pxToEMU(imageDimensions.width),
+      height: pxToEMU(imageDimensions.height)
+    }
+
     const result = await reporter.render({
       template: {
         engine: 'handlebars',
@@ -631,11 +653,151 @@ describe('docx', () => {
         }
       },
       data: {
+        src: 'data:image/png;base64,' + imageBuf.toString('base64')
+      }
+    })
+
+    const ouputImageSize = await getImageSize(result.content)
+
+    // should preserve original image size by default
+    ouputImageSize.width.should.be.eql(targetImageSize.width)
+    ouputImageSize.height.should.be.eql(targetImageSize.height)
+
+    fs.writeFileSync('out.docx', result.content)
+  })
+
+  it('image with placeholder size (usePlaceholderSize)', async () => {
+    const docxBuf = fs.readFileSync(path.join(__dirname, 'image-use-placeholder-size.docx'))
+
+    let placeholderImageSize
+
+    placeholderImageSize = await getImageSize(docxBuf)
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: docxBuf
+          }
+        }
+      },
+      data: {
         src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
       }
     })
 
+    const ouputImageSize = await getImageSize(result.content)
+
+    ouputImageSize.width.should.be.eql(placeholderImageSize.width)
+    ouputImageSize.height.should.be.eql(placeholderImageSize.height)
+
     fs.writeFileSync('out.docx', result.content)
+  })
+
+  const units = ['cm', 'px']
+
+  units.forEach((unit) => {
+    describe(`image size in ${unit}`, () => {
+      it('image with custom size (width, height)', async () => {
+        const docxBuf = fs.readFileSync(path.join(__dirname, unit === 'cm' ? 'image-custom-size.docx' : 'image-custom-size-px.docx'))
+
+        // 3cm defined in the docx
+        const targetImageSize = {
+          width: unit === 'cm' ? cmToEMU(3) : pxToEMU(100),
+          height: unit === 'cm' ? cmToEMU(3) : pxToEMU(100)
+        }
+
+        const result = await reporter.render({
+          template: {
+            engine: 'handlebars',
+            recipe: 'docx',
+            docx: {
+              templateAsset: {
+                content: docxBuf
+              }
+            }
+          },
+          data: {
+            src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+          }
+        })
+
+        const ouputImageSize = await getImageSize(result.content)
+
+        ouputImageSize.width.should.be.eql(targetImageSize.width)
+        ouputImageSize.height.should.be.eql(targetImageSize.height)
+
+        fs.writeFileSync('out.docx', result.content)
+      })
+
+      it('image with custom size (width set and height automatic - keep aspect ratio)', async () => {
+        const docxBuf = fs.readFileSync(path.join(__dirname, unit === 'cm' ? 'image-custom-size-width.docx' : 'image-custom-size-width-px.docx'))
+
+        const targetImageSize = {
+          // 2cm defined in the docx
+          width: unit === 'cm' ? cmToEMU(2) : pxToEMU(100),
+          // height is calculated automatically based on aspect ratio of image
+          height: unit === 'cm' ? cmToEMU(0.5142851308524194) : pxToEMU(25.714330708661418)
+        }
+
+        const result = await reporter.render({
+          template: {
+            engine: 'handlebars',
+            recipe: 'docx',
+            docx: {
+              templateAsset: {
+                content: docxBuf
+              }
+            }
+          },
+          data: {
+            src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+          }
+        })
+
+        const ouputImageSize = await getImageSize(result.content)
+
+        ouputImageSize.width.should.be.eql(targetImageSize.width)
+        ouputImageSize.height.should.be.eql(targetImageSize.height)
+
+        fs.writeFileSync('out.docx', result.content)
+      })
+
+      it('image with custom size (height set and width automatic - keep aspect ratio)', async () => {
+        const docxBuf = fs.readFileSync(path.join(__dirname, unit === 'cm' ? 'image-custom-size-height.docx' : 'image-custom-size-height-px.docx'))
+
+        const targetImageSize = {
+          // width is calculated automatically based on aspect ratio of image
+          width: unit === 'cm' ? cmToEMU(7.777781879962101) : pxToEMU(194.4444094488189),
+          // 2cm defined in the docx
+          height: unit === 'cm' ? cmToEMU(2) : pxToEMU(50)
+        }
+
+        const result = await reporter.render({
+          template: {
+            engine: 'handlebars',
+            recipe: 'docx',
+            docx: {
+              templateAsset: {
+                content: docxBuf
+              }
+            }
+          },
+          data: {
+            src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+          }
+        })
+
+        const ouputImageSize = await getImageSize(result.content)
+
+        ouputImageSize.width.should.be.eql(targetImageSize.width)
+        ouputImageSize.height.should.be.eql(targetImageSize.height)
+
+        fs.writeFileSync('out.docx', result.content)
+      })
+    })
   })
 
   it('image error message when no src provided', async () => {
@@ -670,6 +832,40 @@ describe('docx', () => {
         src: 'data:image/gif;base64,R0lG'
       }
     }).should.be.rejectedWith(/docxImage helper requires src parameter to be valid data uri/)
+  })
+
+  it('image error message when width not valid param', async () => {
+    return reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'image-with-wrong-width.docx'))
+          }
+        }
+      },
+      data: {
+        src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+      }
+    }).should.be.rejectedWith(/docxImage helper requires width parameter to be valid number with unit/)
+  })
+
+  it('image error message when height not valid param', async () => {
+    return reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'image-with-wrong-height.docx'))
+          }
+        }
+      },
+      data: {
+        src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+      }
+    }).should.be.rejectedWith(/docxImage helper requires height parameter to be valid number with unit/)
   })
 
   it('loop', async () => {
