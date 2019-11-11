@@ -42,4 +42,9 @@
       usePlaceholderSize: options.hash.usePlaceholderSize === true || options.hash.usePlaceholderSize === 'true'
     })
   }
+
+  global.docxForm = function (options) {
+    const hash = options.hash || {}
+    return JSON.stringify({ ...hash })
+  }
 })(this)

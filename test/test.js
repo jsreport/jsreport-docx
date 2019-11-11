@@ -946,6 +946,83 @@ describe('docx', () => {
     text.should.containEql('Jan Blaha')
   })
 
+  it('input form control', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'form-control-input.docx'))
+          }
+        }
+      },
+      data: {
+        name: 'Erick'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+
+    doc.getElementsByTagName('w:textInput')[0].getElementsByTagName('w:default')[0].getAttribute('w:val').should.be.eql('Erick')
+  })
+
+  it('checkbox form control', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'form-control-checkbox.docx'))
+          }
+        }
+      },
+      data: {
+        ready: true
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+
+    doc.getElementsByTagName('w:checkBox')[0].getElementsByTagName('w:default')[0].getAttribute('w:val').should.be.eql('1')
+  })
+
+  it('dropdown form control', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'form-control-dropdown.docx'))
+          }
+        }
+      },
+      data: {
+        items: ['Boris', 'Jan', 'Barry']
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+
+    const entries = doc.getElementsByTagName('w:ddList')[0].getElementsByTagName('w:listEntry')
+
+    entries.length.should.be.eql(3)
+    entries[0].getAttribute('w:val').should.be.eql('Boris')
+    entries[1].getAttribute('w:val').should.be.eql('Jan')
+    entries[2].getAttribute('w:val').should.be.eql('Barry')
+  })
+
   it('should be able to reference stored asset', async () => {
     await reporter.documentStore.collection('assets').insert({
       name: 'variable-replace.docx',
