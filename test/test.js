@@ -7,7 +7,7 @@ const { DOMParser } = require('xmldom')
 const { decompress } = require('jsreport-office')
 const sizeOf = require('image-size')
 const textract = util.promisify(require('textract').fromBufferWithName)
-const { pxToEMU, cmToEMU } = require('../lib/utils')
+const { nodeListToArray, pxToEMU, cmToEMU } = require('../lib/utils')
 
 async function getImageSize (buf) {
   const files = await decompress()(buf)
@@ -255,6 +255,111 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
     const text = await textract('test.docx', result.content)
     text.should.containEql('website')
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+    const hyperlink = doc.getElementsByTagName('w:hyperlink')[0]
+    const docRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/document.xml.rels').data.toString())
+    const rels = nodeListToArray(docRels.getElementsByTagName('Relationship'))
+
+    rels.find((node) => node.getAttribute('Id') === hyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://jsreport.net')
+  })
+
+  it('link in header', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'link-header.docx'))
+          }
+        }
+      },
+      data: {
+        linkText: 'jsreport',
+        linkUrl: 'https://jsreport.net'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('jsreport')
+
+    const files = await decompress()(result.content)
+    const header = new DOMParser().parseFromString(files.find(f => f.path === 'word/header1.xml').data.toString())
+    const hyperlink = header.getElementsByTagName('w:hyperlink')[0]
+    const headerRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/header1.xml.rels').data.toString())
+    const rels = nodeListToArray(headerRels.getElementsByTagName('Relationship'))
+
+    rels.find((node) => node.getAttribute('Id') === hyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://jsreport.net')
+  })
+
+  it('link in footer', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'link-footer.docx'))
+          }
+        }
+      },
+      data: {
+        linkText: 'jsreport',
+        linkUrl: 'https://jsreport.net'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('jsreport')
+
+    const files = await decompress()(result.content)
+    const footer = new DOMParser().parseFromString(files.find(f => f.path === 'word/footer1.xml').data.toString())
+    const hyperlink = footer.getElementsByTagName('w:hyperlink')[0]
+    const footerRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/footer1.xml.rels').data.toString())
+    const rels = nodeListToArray(footerRels.getElementsByTagName('Relationship'))
+
+    rels.find((node) => node.getAttribute('Id') === hyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://jsreport.net')
+  })
+
+  it('link in header, footer', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'link-header-footer.docx'))
+          }
+        }
+      },
+      data: {
+        linkText: 'jsreport',
+        linkUrl: 'https://jsreport.net',
+        linkText2: 'github',
+        linkUrl2: 'https://github.com'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('jsreport')
+
+    const files = await decompress()(result.content)
+    const header = new DOMParser().parseFromString(files.find(f => f.path === 'word/header2.xml').data.toString())
+    const footer = new DOMParser().parseFromString(files.find(f => f.path === 'word/footer2.xml').data.toString())
+    const headerHyperlink = header.getElementsByTagName('w:hyperlink')[0]
+    const footerHyperlink = footer.getElementsByTagName('w:hyperlink')[0]
+    const headerRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/header2.xml.rels').data.toString())
+    const footerRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/footer2.xml.rels').data.toString())
+    const rels = nodeListToArray(headerRels.getElementsByTagName('Relationship'))
+    const rels2 = nodeListToArray(footerRels.getElementsByTagName('Relationship'))
+
+    rels.find((node) => node.getAttribute('Id') === headerHyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://jsreport.net')
+    rels2.find((node) => node.getAttribute('Id') === footerHyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://github.com')
   })
 
   it('watermark', async () => {
