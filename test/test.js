@@ -1128,6 +1128,80 @@ describe('docx', () => {
     entries[2].getAttribute('w:val').should.be.eql('Barry')
   })
 
+  it('page break in single paragraph', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'page-break-single-paragraph.docx'))
+          }
+        }
+      },
+      data: {}
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+
+    const paragraphNodes = nodeListToArray(doc.getElementsByTagName('w:p'))
+
+    paragraphNodes[0].getElementsByTagName('w:t')[0].textContent.should.be.eql('Demo')
+    paragraphNodes[1].getElementsByTagName('w:br').should.have.length(1)
+    paragraphNodes[2].getElementsByTagName('w:t')[0].textContent.should.be.eql('break')
+  })
+
+  it('page break between paragraphs', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'page-break-between-paragraphs.docx'))
+          }
+        }
+      },
+      data: {}
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+
+    const paragraphNodes = nodeListToArray(doc.getElementsByTagName('w:p')).filter((p) => {
+      const breakNodes = getBreaks(p)
+
+      const hasText = getText(p) != null && getText(p) !== ''
+
+      if (!hasText && breakNodes.length === 0) {
+        return false
+      }
+
+      return true
+    })
+
+    function getText (p) {
+      const textNodes = nodeListToArray(p.getElementsByTagName('w:t')).filter((t) => {
+        return t.textContent != null && t.textContent !== ''
+      })
+
+      return textNodes.map((t) => t.textContent).join('')
+    }
+
+    function getBreaks (p) {
+      return nodeListToArray(p.getElementsByTagName('w:br'))
+    }
+
+    getText(paragraphNodes[0]).should.be.eql('Demo some text')
+    getBreaks(paragraphNodes[1]).should.have.length(1)
+    getText(paragraphNodes[2]).should.be.eql('after break')
+  })
+
   it('should be able to reference stored asset', async () => {
     await reporter.documentStore.collection('assets').insert({
       name: 'variable-replace.docx',
