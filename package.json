@@ -39,7 +39,6 @@
   "dependencies": {
     "image-size": "0.7.4",
     "jsreport-office": "github:jsreport/jsreport-office",
-    "node.extend.without.arrays": "1.1.6",
     "unescape": "1.0.1",
     "xmldom": "0.1.27"
   },
@@ -49,7 +48,7 @@
     "eslint-plugin-babel": "5.3.0",
     "handlebars": "4.4.3",
     "jsreport-assets": "1.5.1",
-    "jsreport-core": "github:jsreport/jsreport-core#encryption",
+    "jsreport-core": "github:jsreport/jsreport-core",
     "jsreport-handlebars": "2.1.0",
     "jsreport-studio-dev": "1.5.0",
     "jsreport-templates": "2.3.2",
