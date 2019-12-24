@@ -1051,7 +1051,7 @@ describe('docx', () => {
     text.should.containEql('Jan Blaha')
   })
 
-  it('input form control', async () => {
+  it.skip('input form control', async () => {
     const result = await reporter.render({
       template: {
         engine: 'handlebars',
@@ -1075,7 +1075,7 @@ describe('docx', () => {
     doc.getElementsByTagName('w:textInput')[0].getElementsByTagName('w:default')[0].getAttribute('w:val').should.be.eql('Erick')
   })
 
-  it('checkbox form control', async () => {
+  it.skip('checkbox form control', async () => {
     const result = await reporter.render({
       template: {
         engine: 'handlebars',
@@ -1099,7 +1099,7 @@ describe('docx', () => {
     doc.getElementsByTagName('w:checkBox')[0].getElementsByTagName('w:default')[0].getAttribute('w:val').should.be.eql('1')
   })
 
-  it('dropdown form control', async () => {
+  it.skip('dropdown form control', async () => {
     const result = await reporter.render({
       template: {
         engine: 'handlebars',
