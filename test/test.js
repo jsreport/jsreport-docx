@@ -1151,7 +1151,7 @@ describe('docx', () => {
 
     paragraphNodes[0].getElementsByTagName('w:t')[0].textContent.should.be.eql('Demo')
     paragraphNodes[1].getElementsByTagName('w:br').should.have.length(1)
-    paragraphNodes[2].getElementsByTagName('w:t')[0].textContent.should.be.eql('break')
+    paragraphNodes[1].getElementsByTagName('w:t')[0].textContent.should.be.eql('break')
   })
 
   it('page break between paragraphs', async () => {

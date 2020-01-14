@@ -5,7 +5,7 @@
   const Handlebars = require('handlebars')
 
   global.docxPageBreak = function () {
-    return new Handlebars.SafeString('<docxPageBreak />')
+    return new Handlebars.SafeString('$docxPageBreak')
   }
 
   global.docxList = function (data, options) {
