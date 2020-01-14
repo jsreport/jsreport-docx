@@ -15,7 +15,7 @@
     return Handlebars.helpers.each(data, options)
   }
   global.docxStyle = function (options) {
-    return `<docxStyleStart textColor="${options.hash.textColor}" />${options.fn(this)}<docxStyleEnd/>`
+    return new Handlebars.SafeString(`<docxStyle id="${options.hash.id}" textColor="${options.hash.textColor}" />`)
   }
 
   global.docxImage = function (options) {
