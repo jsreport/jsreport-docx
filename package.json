@@ -39,6 +39,7 @@
   "dependencies": {
     "image-size": "0.7.4",
     "jsreport-office": "github:jsreport/jsreport-office",
+    "nock": "11.7.2",
     "request-promise": "4.2.5",
     "string-replace-async": "1.2.1",
     "unescape": "1.0.1",
