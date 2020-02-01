@@ -39,7 +39,6 @@
   "dependencies": {
     "image-size": "0.7.4",
     "jsreport-office": "github:jsreport/jsreport-office",
-    "nock": "11.7.2",
     "request-promise": "4.2.5",
     "string-replace-async": "1.2.1",
     "unescape": "1.0.1",
@@ -58,7 +57,8 @@
     "mocha": "6.1.4",
     "should": "13.2.3",
     "standard": "12.0.1",
-    "textract": "2.5.0"
+    "textract": "2.5.0",
+    "nock": "11.7.2"
   },
   "files": [
     "lib",

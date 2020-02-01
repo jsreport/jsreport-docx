@@ -1,7 +1,7 @@
 /* eslint no-unused-vars: 1 */
 /* eslint no-new-func: 0 */
 /* *global __rootDirectory */
-(function (global) {
+;(function (global) {
   const Handlebars = require('handlebars')
 
   global.docxPageBreak = function () {
@@ -21,19 +21,20 @@
   }
 
   global.docxImage = function (options) {
-    if (!options.hash.src && !options.hash.url) {
+    if (!options.hash.src) {
       throw new Error(
         'docxImage helper requires either url or src parameter to be set'
       )
     }
 
     if (
-      options.hash.src &&
       !options.hash.src.startsWith('data:image/png;base64,') &&
-      !options.hash.src.startsWith('data:image/jpeg;base64,')
+      !options.hash.src.startsWith('data:image/jpeg;base64,') &&
+      !options.hash.src.startsWith('http://') &&
+      !options.hash.src.startsWith('https://')
     ) {
       throw new Error(
-        'docxImage helper requires src parameter to be valid data uri for png or jpeg image. got ' +
+        'docxImage helper requires src parameter to be valid data uri for png or jpeg image or a valid url. Got ' +
           options.hash.src
       )
     }
@@ -64,7 +65,6 @@
     }
 
     return JSON.stringify({
-      url: options.hash.url,
       src: options.hash.src,
       width: options.hash.width,
       height: options.hash.height,

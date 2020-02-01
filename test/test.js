@@ -1132,7 +1132,7 @@ describe('docx', () => {
           recipe: 'docx',
           docx: {
             templateAsset: {
-              content: fs.readFileSync(path.join(__dirname, 'image-url.docx'))
+              content: fs.readFileSync(path.join(__dirname, 'image.docx'))
             }
           }
         },
