@@ -23,7 +23,7 @@
   global.docxImage = function (options) {
     if (!options.hash.src) {
       throw new Error(
-        'docxImage helper requires url parameter to be set'
+        'docxImage helper requires src parameter to be set'
       )
     }
 
