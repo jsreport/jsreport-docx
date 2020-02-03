@@ -1,4 +1,5 @@
 const should = require('should')
+const nock = require('nock')
 const jsreport = require('jsreport-core')
 const fs = require('fs')
 const path = require('path')
@@ -11,7 +12,9 @@ const { nodeListToArray, pxToEMU, cmToEMU } = require('../lib/utils')
 
 async function getImageSize (buf) {
   const files = await decompress()(buf)
-  const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+  const doc = new DOMParser().parseFromString(
+    files.find(f => f.path === 'word/document.xml').data.toString()
+  )
   const elDrawing = doc.getElementsByTagName('w:drawing')[0]
   const wpExtendEl = elDrawing.getElementsByTagName('wp:extent')[0]
 
@@ -29,7 +32,8 @@ describe('docx', () => {
       templatingEngines: {
         strategy: 'in-process'
       }
-    }).use(require('../')())
+    })
+      .use(require('../')())
       .use(require('jsreport-handlebars')())
       .use(require('jsreport-templates')())
       .use(require('jsreport-assets')())
@@ -45,7 +49,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'condition-with-helper-call.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'condition-with-helper-call.docx')
+            )
           }
         },
         helpers: `
@@ -97,7 +103,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'variable-replace.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'variable-replace.docx')
+            )
           }
         }
       },
@@ -118,7 +126,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'variable-replace-multi.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'variable-replace-multi.docx')
+            )
           }
         }
       },
@@ -130,7 +140,9 @@ describe('docx', () => {
 
     fs.writeFileSync('out.docx', result.content)
     const text = await textract('test.docx', result.content)
-    text.should.containEql('Hello world John developer Another lines John developer with Wick as lastname')
+    text.should.containEql(
+      'Hello world John developer Another lines John developer with Wick as lastname'
+    )
   })
 
   it('variable-replace-syntax-error', () => {
@@ -140,7 +152,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'variable-replace-syntax-error.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'variable-replace-syntax-error.docx')
+            )
           }
         }
       },
@@ -176,14 +190,16 @@ describe('docx', () => {
         },
         total: 1000,
         date: 'dddd',
-        items: [{
-          product: {
-            name: 'jsreport',
-            price: 11
-          },
-          quantity: 10,
-          cost: 20
-        }]
+        items: [
+          {
+            product: {
+              name: 'jsreport',
+              price: 11
+            },
+            quantity: 10,
+            cost: 20
+          }
+        ]
       }
     })
 
@@ -257,12 +273,19 @@ describe('docx', () => {
     text.should.containEql('website')
 
     const files = await decompress()(result.content)
-    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
     const hyperlink = doc.getElementsByTagName('w:hyperlink')[0]
-    const docRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/document.xml.rels').data.toString())
+    const docRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/document.xml.rels').data.toString()
+    )
     const rels = nodeListToArray(docRels.getElementsByTagName('Relationship'))
 
-    rels.find((node) => node.getAttribute('Id') === hyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://jsreport.net')
+    rels
+      .find(node => node.getAttribute('Id') === hyperlink.getAttribute('r:id'))
+      .getAttribute('Target')
+      .should.be.eql('https://jsreport.net')
   })
 
   it('link in header', async () => {
@@ -287,12 +310,21 @@ describe('docx', () => {
     text.should.containEql('jsreport')
 
     const files = await decompress()(result.content)
-    const header = new DOMParser().parseFromString(files.find(f => f.path === 'word/header1.xml').data.toString())
+    const header = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/header1.xml').data.toString()
+    )
     const hyperlink = header.getElementsByTagName('w:hyperlink')[0]
-    const headerRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/header1.xml.rels').data.toString())
-    const rels = nodeListToArray(headerRels.getElementsByTagName('Relationship'))
+    const headerRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/header1.xml.rels').data.toString()
+    )
+    const rels = nodeListToArray(
+      headerRels.getElementsByTagName('Relationship')
+    )
 
-    rels.find((node) => node.getAttribute('Id') === hyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://jsreport.net')
+    rels
+      .find(node => node.getAttribute('Id') === hyperlink.getAttribute('r:id'))
+      .getAttribute('Target')
+      .should.be.eql('https://jsreport.net')
   })
 
   it('link in footer', async () => {
@@ -317,12 +349,21 @@ describe('docx', () => {
     text.should.containEql('jsreport')
 
     const files = await decompress()(result.content)
-    const footer = new DOMParser().parseFromString(files.find(f => f.path === 'word/footer1.xml').data.toString())
+    const footer = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/footer1.xml').data.toString()
+    )
     const hyperlink = footer.getElementsByTagName('w:hyperlink')[0]
-    const footerRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/footer1.xml.rels').data.toString())
-    const rels = nodeListToArray(footerRels.getElementsByTagName('Relationship'))
+    const footerRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/footer1.xml.rels').data.toString()
+    )
+    const rels = nodeListToArray(
+      footerRels.getElementsByTagName('Relationship')
+    )
 
-    rels.find((node) => node.getAttribute('Id') === hyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://jsreport.net')
+    rels
+      .find(node => node.getAttribute('Id') === hyperlink.getAttribute('r:id'))
+      .getAttribute('Target')
+      .should.be.eql('https://jsreport.net')
   })
 
   it('link in header, footer', async () => {
@@ -332,7 +373,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'link-header-footer.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'link-header-footer.docx')
+            )
           }
         }
       },
@@ -349,17 +392,39 @@ describe('docx', () => {
     text.should.containEql('jsreport')
 
     const files = await decompress()(result.content)
-    const header = new DOMParser().parseFromString(files.find(f => f.path === 'word/header2.xml').data.toString())
-    const footer = new DOMParser().parseFromString(files.find(f => f.path === 'word/footer2.xml').data.toString())
+    const header = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/header2.xml').data.toString()
+    )
+    const footer = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/footer2.xml').data.toString()
+    )
     const headerHyperlink = header.getElementsByTagName('w:hyperlink')[0]
     const footerHyperlink = footer.getElementsByTagName('w:hyperlink')[0]
-    const headerRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/header2.xml.rels').data.toString())
-    const footerRels = new DOMParser().parseFromString(files.find(f => f.path === 'word/_rels/footer2.xml.rels').data.toString())
-    const rels = nodeListToArray(headerRels.getElementsByTagName('Relationship'))
-    const rels2 = nodeListToArray(footerRels.getElementsByTagName('Relationship'))
+    const headerRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/header2.xml.rels').data.toString()
+    )
+    const footerRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/footer2.xml.rels').data.toString()
+    )
+    const rels = nodeListToArray(
+      headerRels.getElementsByTagName('Relationship')
+    )
+    const rels2 = nodeListToArray(
+      footerRels.getElementsByTagName('Relationship')
+    )
 
-    rels.find((node) => node.getAttribute('Id') === headerHyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://jsreport.net')
-    rels2.find((node) => node.getAttribute('Id') === footerHyperlink.getAttribute('r:id')).getAttribute('Target').should.be.eql('https://github.com')
+    rels
+      .find(
+        node => node.getAttribute('Id') === headerHyperlink.getAttribute('r:id')
+      )
+      .getAttribute('Target')
+      .should.be.eql('https://jsreport.net')
+    rels2
+      .find(
+        node => node.getAttribute('Id') === footerHyperlink.getAttribute('r:id')
+      )
+      .getAttribute('Target')
+      .should.be.eql('https://github.com')
   })
 
   it('watermark', async () => {
@@ -381,13 +446,31 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
 
     const files = await decompress()(result.content)
-    let header1 = new DOMParser().parseFromString(files.find(f => f.path === 'word/header1.xml').data.toString())
-    let header2 = new DOMParser().parseFromString(files.find(f => f.path === 'word/header2.xml').data.toString())
-    let header3 = new DOMParser().parseFromString(files.find(f => f.path === 'word/header3.xml').data.toString())
+    let header1 = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/header1.xml').data.toString()
+    )
+    let header2 = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/header2.xml').data.toString()
+    )
+    let header3 = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/header3.xml').data.toString()
+    )
 
-    header1.getElementsByTagName('v:shape')[0].getElementsByTagName('v:textpath')[0].getAttribute('string').should.be.eql('replacedvalue')
-    header2.getElementsByTagName('v:shape')[0].getElementsByTagName('v:textpath')[0].getAttribute('string').should.be.eql('replacedvalue')
-    header3.getElementsByTagName('v:shape')[0].getElementsByTagName('v:textpath')[0].getAttribute('string').should.be.eql('replacedvalue')
+    header1
+      .getElementsByTagName('v:shape')[0]
+      .getElementsByTagName('v:textpath')[0]
+      .getAttribute('string')
+      .should.be.eql('replacedvalue')
+    header2
+      .getElementsByTagName('v:shape')[0]
+      .getElementsByTagName('v:textpath')[0]
+      .getAttribute('string')
+      .should.be.eql('replacedvalue')
+    header3
+      .getElementsByTagName('v:shape')[0]
+      .getElementsByTagName('v:textpath')[0]
+      .getAttribute('string')
+      .should.be.eql('replacedvalue')
   })
 
   it('list', async () => {
@@ -402,13 +485,17 @@ describe('docx', () => {
         }
       },
       data: {
-        people: [{
-          name: 'Jan'
-        }, {
-          name: 'Boris'
-        }, {
-          name: 'Pavel'
-        }]
+        people: [
+          {
+            name: 'Jan'
+          },
+          {
+            name: 'Boris'
+          },
+          {
+            name: 'Pavel'
+          }
+        ]
       }
     })
 
@@ -425,18 +512,23 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'list-and-links.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'list-and-links.docx')
+            )
           }
         }
       },
       data: {
-        items: [{
-          text: 'jsreport',
-          address: 'https://jsreport.net'
-        }, {
-          text: 'github',
-          address: 'https://github.com'
-        }]
+        items: [
+          {
+            text: 'jsreport',
+            address: 'https://jsreport.net'
+          },
+          {
+            text: 'github',
+            address: 'https://github.com'
+          }
+        ]
       }
     })
 
@@ -454,18 +546,23 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'list-and-endnotes.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'list-and-endnotes.docx')
+            )
           }
         }
       },
       data: {
-        items: [{
-          name: '1',
-          note: '1n'
-        }, {
-          name: '2',
-          note: '2n'
-        }]
+        items: [
+          {
+            name: '1',
+            note: '1n'
+          },
+          {
+            name: '2',
+            note: '2n'
+          }
+        ]
       }
     })
 
@@ -483,18 +580,23 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'list-and-footnotes.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'list-and-footnotes.docx')
+            )
           }
         }
       },
       data: {
-        items: [{
-          name: '1',
-          note: '1n'
-        }, {
-          name: '2',
-          note: '2n'
-        }]
+        items: [
+          {
+            name: '1',
+            note: '1n'
+          },
+          {
+            name: '2',
+            note: '2n'
+          }
+        ]
       }
     })
 
@@ -512,7 +614,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'variable-replace-and-list-after.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'variable-replace-and-list-after.docx')
+            )
           }
         }
       },
@@ -523,7 +627,9 @@ describe('docx', () => {
 
     fs.writeFileSync('out.docx', result.content)
     const text = await textract('test.docx', result.content)
-    text.should.containEql('This is a test John here we go Test 1 Test 2 Test 3')
+    text.should.containEql(
+      'This is a test John here we go Test 1 Test 2 Test 3'
+    )
   })
 
   it('variable-replace-and-list-after2', async () => {
@@ -533,7 +639,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'variable-replace-and-list-after2.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'variable-replace-and-list-after2.docx')
+            )
           }
         }
       },
@@ -544,7 +652,9 @@ describe('docx', () => {
 
     fs.writeFileSync('out.docx', result.content)
     const text = await textract('test.docx', result.content)
-    text.should.containEql('This is a test John here we go Test 1 Test 2 Test 3 This is another test John can you see me here')
+    text.should.containEql(
+      'This is a test John here we go Test 1 Test 2 Test 3 This is another test John can you see me here'
+    )
   })
 
   it('variable-replace-and-list-after-syntax-error', async () => {
@@ -554,7 +664,12 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'variable-replace-and-list-after-syntax-error.docx'))
+            content: fs.readFileSync(
+              path.join(
+                __dirname,
+                'variable-replace-and-list-after-syntax-error.docx'
+              )
+            )
           }
         }
       },
@@ -582,13 +697,20 @@ describe('docx', () => {
         }
       },
       data: {
-        people: [{
-          name: 'Jan', email: 'jan.blaha@foo.com'
-        }, {
-          name: 'Boris', email: 'boris@foo.met'
-        }, {
-          name: 'Pavel', email: 'pavel@foo.met'
-        }]
+        people: [
+          {
+            name: 'Jan',
+            email: 'jan.blaha@foo.com'
+          },
+          {
+            name: 'Boris',
+            email: 'boris@foo.met'
+          },
+          {
+            name: 'Pavel',
+            email: 'pavel@foo.met'
+          }
+        ]
       }
     })
 
@@ -605,27 +727,36 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'table-and-links.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'table-and-links.docx')
+            )
           }
         }
       },
       data: {
-        courses: [{
-          name: 'The Open University',
-          description: 'Distance and online courses. Qualifications range from certificates, diplomas and short courses to undergraduate and postgraduate degrees.',
-          linkName: 'Go to the site1',
-          linkURL: 'http://www.openuniversity.edu/courses'
-        }, {
-          name: 'Coursera',
-          description: 'Online courses from top universities like Yale, Michigan, Stanford, and leading companies like Google and IBM.',
-          linkName: 'Go to the site2',
-          linkURL: 'https://plato.stanford.edu/'
-        }, {
-          name: 'edX',
-          description: 'Flexible learning on your schedule. Access more than 1900 online courses from 100+ leading institutions including Harvard, MIT, Microsoft, and more.',
-          linkName: 'Go to the site3',
-          linkURL: 'https://www.edx.org/'
-        }]
+        courses: [
+          {
+            name: 'The Open University',
+            description:
+              'Distance and online courses. Qualifications range from certificates, diplomas and short courses to undergraduate and postgraduate degrees.',
+            linkName: 'Go to the site1',
+            linkURL: 'http://www.openuniversity.edu/courses'
+          },
+          {
+            name: 'Coursera',
+            description:
+              'Online courses from top universities like Yale, Michigan, Stanford, and leading companies like Google and IBM.',
+            linkName: 'Go to the site2',
+            linkURL: 'https://plato.stanford.edu/'
+          },
+          {
+            name: 'edX',
+            description:
+              'Flexible learning on your schedule. Access more than 1900 online courses from 100+ leading institutions including Harvard, MIT, Microsoft, and more.',
+            linkName: 'Go to the site3',
+            linkURL: 'https://www.edx.org/'
+          }
+        ]
       }
     })
 
@@ -644,30 +775,39 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'table-and-endnotes.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'table-and-endnotes.docx')
+            )
           }
         }
       },
       data: {
-        courses: [{
-          name: 'The Open University',
-          description: 'Distance and online courses. Qualifications range from certificates, diplomas and short courses to undergraduate and postgraduate degrees.',
-          linkName: 'Go to the site1',
-          linkURL: 'http://www.openuniversity.edu/courses',
-          note: 'note site1'
-        }, {
-          name: 'Coursera',
-          description: 'Online courses from top universities like Yale, Michigan, Stanford, and leading companies like Google and IBM.',
-          linkName: 'Go to the site2',
-          linkURL: 'https://plato.stanford.edu/',
-          note: 'note site2'
-        }, {
-          name: 'edX',
-          description: 'Flexible learning on your schedule. Access more than 1900 online courses from 100+ leading institutions including Harvard, MIT, Microsoft, and more.',
-          linkName: 'Go to the site3',
-          linkURL: 'https://www.edx.org/',
-          note: 'note site3'
-        }]
+        courses: [
+          {
+            name: 'The Open University',
+            description:
+              'Distance and online courses. Qualifications range from certificates, diplomas and short courses to undergraduate and postgraduate degrees.',
+            linkName: 'Go to the site1',
+            linkURL: 'http://www.openuniversity.edu/courses',
+            note: 'note site1'
+          },
+          {
+            name: 'Coursera',
+            description:
+              'Online courses from top universities like Yale, Michigan, Stanford, and leading companies like Google and IBM.',
+            linkName: 'Go to the site2',
+            linkURL: 'https://plato.stanford.edu/',
+            note: 'note site2'
+          },
+          {
+            name: 'edX',
+            description:
+              'Flexible learning on your schedule. Access more than 1900 online courses from 100+ leading institutions including Harvard, MIT, Microsoft, and more.',
+            linkName: 'Go to the site3',
+            linkURL: 'https://www.edx.org/',
+            note: 'note site3'
+          }
+        ]
       }
     })
 
@@ -686,30 +826,39 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'table-and-footnotes.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'table-and-footnotes.docx')
+            )
           }
         }
       },
       data: {
-        courses: [{
-          name: 'The Open University',
-          description: 'Distance and online courses. Qualifications range from certificates, diplomas and short courses to undergraduate and postgraduate degrees.',
-          linkName: 'Go to the site1',
-          linkURL: 'http://www.openuniversity.edu/courses',
-          note: 'note site1'
-        }, {
-          name: 'Coursera',
-          description: 'Online courses from top universities like Yale, Michigan, Stanford, and leading companies like Google and IBM.',
-          linkName: 'Go to the site2',
-          linkURL: 'https://plato.stanford.edu/',
-          note: 'note site2'
-        }, {
-          name: 'edX',
-          description: 'Flexible learning on your schedule. Access more than 1900 online courses from 100+ leading institutions including Harvard, MIT, Microsoft, and more.',
-          linkName: 'Go to the site3',
-          linkURL: 'https://www.edx.org/',
-          note: 'note site3'
-        }]
+        courses: [
+          {
+            name: 'The Open University',
+            description:
+              'Distance and online courses. Qualifications range from certificates, diplomas and short courses to undergraduate and postgraduate degrees.',
+            linkName: 'Go to the site1',
+            linkURL: 'http://www.openuniversity.edu/courses',
+            note: 'note site1'
+          },
+          {
+            name: 'Coursera',
+            description:
+              'Online courses from top universities like Yale, Michigan, Stanford, and leading companies like Google and IBM.',
+            linkName: 'Go to the site2',
+            linkURL: 'https://plato.stanford.edu/',
+            note: 'note site2'
+          },
+          {
+            name: 'edX',
+            description:
+              'Flexible learning on your schedule. Access more than 1900 online courses from 100+ leading institutions including Harvard, MIT, Microsoft, and more.',
+            linkName: 'Go to the site3',
+            linkURL: 'https://www.edx.org/',
+            note: 'note site3'
+          }
+        ]
       }
     })
 
@@ -772,7 +921,9 @@ describe('docx', () => {
   })
 
   it('image with placeholder size (usePlaceholderSize)', async () => {
-    const docxBuf = fs.readFileSync(path.join(__dirname, 'image-use-placeholder-size.docx'))
+    const docxBuf = fs.readFileSync(
+      path.join(__dirname, 'image-use-placeholder-size.docx')
+    )
 
     let placeholderImageSize
 
@@ -789,7 +940,9 @@ describe('docx', () => {
         }
       },
       data: {
-        src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+        src:
+          'data:image/png;base64,' +
+          fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
       }
     })
 
@@ -803,10 +956,17 @@ describe('docx', () => {
 
   const units = ['cm', 'px']
 
-  units.forEach((unit) => {
+  units.forEach(unit => {
     describe(`image size in ${unit}`, () => {
       it('image with custom size (width, height)', async () => {
-        const docxBuf = fs.readFileSync(path.join(__dirname, unit === 'cm' ? 'image-custom-size.docx' : 'image-custom-size-px.docx'))
+        const docxBuf = fs.readFileSync(
+          path.join(
+            __dirname,
+            unit === 'cm'
+              ? 'image-custom-size.docx'
+              : 'image-custom-size-px.docx'
+          )
+        )
 
         // 3cm defined in the docx
         const targetImageSize = {
@@ -825,7 +985,11 @@ describe('docx', () => {
             }
           },
           data: {
-            src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+            src:
+              'data:image/png;base64,' +
+              fs
+                .readFileSync(path.join(__dirname, 'image.png'))
+                .toString('base64')
           }
         })
 
@@ -838,13 +1002,23 @@ describe('docx', () => {
       })
 
       it('image with custom size (width set and height automatic - keep aspect ratio)', async () => {
-        const docxBuf = fs.readFileSync(path.join(__dirname, unit === 'cm' ? 'image-custom-size-width.docx' : 'image-custom-size-width-px.docx'))
+        const docxBuf = fs.readFileSync(
+          path.join(
+            __dirname,
+            unit === 'cm'
+              ? 'image-custom-size-width.docx'
+              : 'image-custom-size-width-px.docx'
+          )
+        )
 
         const targetImageSize = {
           // 2cm defined in the docx
           width: unit === 'cm' ? cmToEMU(2) : pxToEMU(100),
           // height is calculated automatically based on aspect ratio of image
-          height: unit === 'cm' ? cmToEMU(0.5142851308524194) : pxToEMU(25.714330708661418)
+          height:
+            unit === 'cm'
+              ? cmToEMU(0.5142851308524194)
+              : pxToEMU(25.714330708661418)
         }
 
         const result = await reporter.render({
@@ -858,7 +1032,11 @@ describe('docx', () => {
             }
           },
           data: {
-            src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+            src:
+              'data:image/png;base64,' +
+              fs
+                .readFileSync(path.join(__dirname, 'image.png'))
+                .toString('base64')
           }
         })
 
@@ -871,11 +1049,21 @@ describe('docx', () => {
       })
 
       it('image with custom size (height set and width automatic - keep aspect ratio)', async () => {
-        const docxBuf = fs.readFileSync(path.join(__dirname, unit === 'cm' ? 'image-custom-size-height.docx' : 'image-custom-size-height-px.docx'))
+        const docxBuf = fs.readFileSync(
+          path.join(
+            __dirname,
+            unit === 'cm'
+              ? 'image-custom-size-height.docx'
+              : 'image-custom-size-height-px.docx'
+          )
+        )
 
         const targetImageSize = {
           // width is calculated automatically based on aspect ratio of image
-          width: unit === 'cm' ? cmToEMU(7.777781879962101) : pxToEMU(194.4444094488189),
+          width:
+            unit === 'cm'
+              ? cmToEMU(7.777781879962101)
+              : pxToEMU(194.4444094488189),
           // 2cm defined in the docx
           height: unit === 'cm' ? cmToEMU(2) : pxToEMU(50)
         }
@@ -891,7 +1079,11 @@ describe('docx', () => {
             }
           },
           data: {
-            src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
+            src:
+              'data:image/png;base64,' +
+              fs
+                .readFileSync(path.join(__dirname, 'image.png'))
+                .toString('base64')
           }
         })
 
@@ -906,71 +1098,124 @@ describe('docx', () => {
   })
 
   it('image error message when no src provided', async () => {
-    return reporter.render({
-      template: {
-        engine: 'handlebars',
-        recipe: 'docx',
-        docx: {
-          templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'image.docx'))
+    return reporter
+      .render({
+        template: {
+          engine: 'handlebars',
+          recipe: 'docx',
+          docx: {
+            templateAsset: {
+              content: fs.readFileSync(path.join(__dirname, 'image.docx'))
+            }
           }
+        },
+        data: {
+          src: null
         }
-      },
-      data: {
-        src: null
-      }
-    }).should.be.rejectedWith(/src parameter to be set/)
+      })
+      .should.be.rejectedWith(/src parameter to be set/)
+  })
+
+  it('image can render from url', async () => {
+    const url = 'https://some-server.com/some-image.png'
+
+    nock('https://some-server.com')
+      .get('/some-image.png')
+      .replyWithFile(200, path.join(__dirname, 'image.png'), {
+        'content-type': 'image/png'
+      })
+
+    return reporter
+      .render({
+        template: {
+          engine: 'handlebars',
+          recipe: 'docx',
+          docx: {
+            templateAsset: {
+              content: fs.readFileSync(path.join(__dirname, 'image.docx'))
+            }
+          }
+        },
+        data: {
+          src: url
+        }
+      })
+      .should.not.be.rejectedWith(/src parameter to be set/)
   })
 
   it('image error message when src not valid param', async () => {
-    return reporter.render({
-      template: {
-        engine: 'handlebars',
-        recipe: 'docx',
-        docx: {
-          templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'image.docx'))
+    return reporter
+      .render({
+        template: {
+          engine: 'handlebars',
+          recipe: 'docx',
+          docx: {
+            templateAsset: {
+              content: fs.readFileSync(path.join(__dirname, 'image.docx'))
+            }
           }
+        },
+        data: {
+          src: 'data:image/gif;base64,R0lG'
         }
-      },
-      data: {
-        src: 'data:image/gif;base64,R0lG'
-      }
-    }).should.be.rejectedWith(/docxImage helper requires src parameter to be valid data uri/)
+      })
+      .should.be.rejectedWith(
+        /docxImage helper requires src parameter to be valid data uri/
+      )
   })
 
   it('image error message when width not valid param', async () => {
-    return reporter.render({
-      template: {
-        engine: 'handlebars',
-        recipe: 'docx',
-        docx: {
-          templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'image-with-wrong-width.docx'))
+    return reporter
+      .render({
+        template: {
+          engine: 'handlebars',
+          recipe: 'docx',
+          docx: {
+            templateAsset: {
+              content: fs.readFileSync(
+                path.join(__dirname, 'image-with-wrong-width.docx')
+              )
+            }
           }
+        },
+        data: {
+          src:
+            'data:image/png;base64,' +
+            fs
+              .readFileSync(path.join(__dirname, 'image.png'))
+              .toString('base64')
         }
-      },
-      data: {
-        src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
-      }
-    }).should.be.rejectedWith(/docxImage helper requires width parameter to be valid number with unit/)
+      })
+      .should.be.rejectedWith(
+        /docxImage helper requires width parameter to be valid number with unit/
+      )
   })
 
   it('image error message when height not valid param', async () => {
-    return reporter.render({
-      template: {
-        engine: 'handlebars',
-        recipe: 'docx',
-        docx: {
-          templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'image-with-wrong-height.docx'))
+    return reporter
+      .render({
+        template: {
+          engine: 'handlebars',
+          recipe: 'docx',
+          docx: {
+            templateAsset: {
+              content: fs.readFileSync(
+                path.join(__dirname, 'image-with-wrong-height.docx')
+              )
+            }
           }
+        },
+        data: {
+          src:
+            'data:image/png;base64,' +
+            fs
+              .readFileSync(path.join(__dirname, 'image.png'))
+              .toString('base64')
         }
-      },
-      data: {
-        src: 'data:image/png;base64,' + fs.readFileSync(path.join(__dirname, 'image.png')).toString('base64')
-      }
-    }).should.be.rejectedWith(/docxImage helper requires height parameter to be valid number with unit/)
+      })
+      .should.be.rejectedWith(
+        /docxImage helper requires height parameter to be valid number with unit/
+      )
   })
 
   it('loop', async () => {
@@ -985,13 +1230,16 @@ describe('docx', () => {
         }
       },
       data: {
-        chapters: [{
-          title: 'Chapter 1',
-          text: 'This is the first chapter'
-        }, {
-          title: 'Chapter 2',
-          text: 'This is the second chapter'
-        }]
+        chapters: [
+          {
+            title: 'Chapter 1',
+            text: 'This is the first chapter'
+          },
+          {
+            title: 'Chapter 2',
+            text: 'This is the second chapter'
+          }
+        ]
       }
     })
 
@@ -1026,22 +1274,28 @@ describe('docx', () => {
         description: `I am software developer, software architect and consultant with over 8 years of professional
         experience working on projects for cross domain market leaders. My experience covers custom
         projects for big costumers in the banking or electricity domain as well as cloud based SaaS startups.`,
-        experiences: [{
-          title: '.NET Developer',
-          company: 'Unicorn',
-          from: '1.1.2010',
-          to: '15.5.2012'
-        }, {
-          title: 'Solution Architect',
-          company: 'Simplias',
-          from: '15.5.2012',
-          to: 'now'
-        }],
-        skills: [{
-          title: 'The worst developer ever'
-        }, {
-          title: `Don't need to write semicolons`
-        }],
+        experiences: [
+          {
+            title: '.NET Developer',
+            company: 'Unicorn',
+            from: '1.1.2010',
+            to: '15.5.2012'
+          },
+          {
+            title: 'Solution Architect',
+            company: 'Simplias',
+            from: '15.5.2012',
+            to: 'now'
+          }
+        ],
+        skills: [
+          {
+            title: 'The worst developer ever'
+          },
+          {
+            title: `Don't need to write semicolons`
+          }
+        ],
         printFooter: true
       }
     })
@@ -1058,7 +1312,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'form-control-input.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'form-control-input.docx')
+            )
           }
         }
       },
@@ -1070,9 +1326,15 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
 
     const files = await decompress()(result.content)
-    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
 
-    doc.getElementsByTagName('w:textInput')[0].getElementsByTagName('w:default')[0].getAttribute('w:val').should.be.eql('Erick')
+    doc
+      .getElementsByTagName('w:textInput')[0]
+      .getElementsByTagName('w:default')[0]
+      .getAttribute('w:val')
+      .should.be.eql('Erick')
   })
 
   it.skip('checkbox form control', async () => {
@@ -1082,7 +1344,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'form-control-checkbox.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'form-control-checkbox.docx')
+            )
           }
         }
       },
@@ -1094,9 +1358,15 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
 
     const files = await decompress()(result.content)
-    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
 
-    doc.getElementsByTagName('w:checkBox')[0].getElementsByTagName('w:default')[0].getAttribute('w:val').should.be.eql('1')
+    doc
+      .getElementsByTagName('w:checkBox')[0]
+      .getElementsByTagName('w:default')[0]
+      .getAttribute('w:val')
+      .should.be.eql('1')
   })
 
   it.skip('dropdown form control', async () => {
@@ -1106,7 +1376,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'form-control-dropdown.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'form-control-dropdown.docx')
+            )
           }
         }
       },
@@ -1118,9 +1390,13 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
 
     const files = await decompress()(result.content)
-    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
 
-    const entries = doc.getElementsByTagName('w:ddList')[0].getElementsByTagName('w:listEntry')
+    const entries = doc
+      .getElementsByTagName('w:ddList')[0]
+      .getElementsByTagName('w:listEntry')
 
     entries.length.should.be.eql(3)
     entries[0].getAttribute('w:val').should.be.eql('Boris')
@@ -1135,7 +1411,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'page-break-single-paragraph.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'page-break-single-paragraph.docx')
+            )
           }
         }
       },
@@ -1145,13 +1423,19 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
 
     const files = await decompress()(result.content)
-    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
 
     const paragraphNodes = nodeListToArray(doc.getElementsByTagName('w:p'))
 
-    paragraphNodes[0].getElementsByTagName('w:t')[0].textContent.should.be.eql('Demo')
+    paragraphNodes[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('Demo')
     paragraphNodes[1].getElementsByTagName('w:br').should.have.length(1)
-    paragraphNodes[1].getElementsByTagName('w:t')[0].textContent.should.be.eql('break')
+    paragraphNodes[1]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('break')
   })
 
   it('page break between paragraphs', async () => {
@@ -1161,7 +1445,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'page-break-between-paragraphs.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'page-break-between-paragraphs.docx')
+            )
           }
         }
       },
@@ -1171,9 +1457,13 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
 
     const files = await decompress()(result.content)
-    const doc = new DOMParser().parseFromString(files.find(f => f.path === 'word/document.xml').data.toString())
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
 
-    const paragraphNodes = nodeListToArray(doc.getElementsByTagName('w:p')).filter((p) => {
+    const paragraphNodes = nodeListToArray(
+      doc.getElementsByTagName('w:p')
+    ).filter(p => {
       const breakNodes = getBreaks(p)
 
       const hasText = getText(p) != null && getText(p) !== ''
@@ -1186,11 +1476,13 @@ describe('docx', () => {
     })
 
     function getText (p) {
-      const textNodes = nodeListToArray(p.getElementsByTagName('w:t')).filter((t) => {
-        return t.textContent != null && t.textContent !== ''
-      })
+      const textNodes = nodeListToArray(p.getElementsByTagName('w:t')).filter(
+        t => {
+          return t.textContent != null && t.textContent !== ''
+        }
+      )
 
-      return textNodes.map((t) => t.textContent).join('')
+      return textNodes.map(t => t.textContent).join('')
     }
 
     function getBreaks (p) {
@@ -1232,7 +1524,9 @@ describe('docx', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'variable-replace.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'variable-replace.docx')
+            )
           }
         }
       },
@@ -1256,7 +1550,8 @@ describe('docx with extensions.docx.previewInWordOnline === false', () => {
       templatingEngines: {
         strategy: 'in-process'
       }
-    }).use(require('../')({ preview: { enabled: false } }))
+    })
+      .use(require('../')({ preview: { enabled: false } }))
       .use(require('jsreport-handlebars')())
       .use(require('jsreport-templates')())
       .use(require('jsreport-assets')())
@@ -1272,7 +1567,9 @@ describe('docx with extensions.docx.previewInWordOnline === false', () => {
         recipe: 'docx',
         docx: {
           templateAsset: {
-            content: fs.readFileSync(path.join(__dirname, 'variable-replace.docx'))
+            content: fs.readFileSync(
+              path.join(__dirname, 'variable-replace.docx')
+            )
           }
         }
       },
