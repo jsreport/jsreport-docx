@@ -1305,7 +1305,7 @@ describe('docx', () => {
     text.should.containEql('Jan Blaha')
   })
 
-  it.skip('input form control', async () => {
+  it('input form control', async () => {
     const result = await reporter.render({
       template: {
         engine: 'handlebars',
@@ -1337,7 +1337,7 @@ describe('docx', () => {
       .should.be.eql('Erick')
   })
 
-  it.skip('checkbox form control', async () => {
+  it('checkbox form control', async () => {
     const result = await reporter.render({
       template: {
         engine: 'handlebars',
@@ -1363,13 +1363,17 @@ describe('docx', () => {
     )
 
     doc
-      .getElementsByTagName('w:checkBox')[0]
-      .getElementsByTagName('w:default')[0]
-      .getAttribute('w:val')
+      .getElementsByTagName('w14:checked')[0]
+      .getAttribute('w14:val')
       .should.be.eql('1')
+
+    doc
+      .getElementsByTagName('w:sdt')[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('☒')
   })
 
-  it.skip('dropdown form control', async () => {
+  it('combobox form control', async () => {
     const result = await reporter.render({
       template: {
         engine: 'handlebars',
@@ -1377,13 +1381,13 @@ describe('docx', () => {
         docx: {
           templateAsset: {
             content: fs.readFileSync(
-              path.join(__dirname, 'form-control-dropdown.docx')
+              path.join(__dirname, 'form-control-combo.docx')
             )
           }
         }
       },
       data: {
-        items: ['Boris', 'Jan', 'Barry']
+        val: 'vala'
       }
     })
 
@@ -1394,14 +1398,107 @@ describe('docx', () => {
       files.find(f => f.path === 'word/document.xml').data.toString()
     )
 
-    const entries = doc
-      .getElementsByTagName('w:ddList')[0]
-      .getElementsByTagName('w:listEntry')
+    doc.getElementsByTagName('w:sdtContent')[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('display val')
+  })
 
-    entries.length.should.be.eql(3)
-    entries[0].getAttribute('w:val').should.be.eql('Boris')
-    entries[1].getAttribute('w:val').should.be.eql('Jan')
-    entries[2].getAttribute('w:val').should.be.eql('Barry')
+  it('combobox form control with constant value', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(
+              path.join(__dirname, 'form-control-combo-constant-value.docx')
+            )
+          }
+        }
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    doc.getElementsByTagName('w:sdtContent')[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('value a')
+  })
+
+  it('combobox form control with dynamic items', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(
+              path.join(__dirname, 'form-control-combo-dynamic-items.docx')
+            )
+          }
+        }
+      },
+      data: {
+        val: 'b',
+        items: [
+          {
+            value: 'a',
+            text: 'Jan'
+          },
+          {
+            value: 'b',
+            text: 'Boris'
+          }
+        ]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    doc.getElementsByTagName('w:sdtContent')[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('Boris')
+  })
+
+  it('combobox form control with dynamic items in strings', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(
+              path.join(__dirname, 'form-control-combo-dynamic-items.docx')
+            )
+          }
+        }
+      },
+      data: {
+        val: 'Boris',
+        items: ['Jan', 'Boris']
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    doc.getElementsByTagName('w:sdtContent')[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('Boris')
   })
 
   it('page break in single paragraph', async () => {

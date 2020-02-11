@@ -74,8 +74,27 @@
     })
   }
 
-  global.docxForm = function (options) {
-    const hash = options.hash || {}
-    return JSON.stringify({ ...hash })
+  global.docxSelect = function (options) {
+    if (options.hash.value == null) {
+      throw new Error('docxdSelect requires value parameter')
+    }
+
+    options.hash.value = options.hash.value === 'true' || options.hash.value === true
+
+    return '$docxCheckbox' + JSON.stringify(options.hash) + '$'
+  }
+
+  global.docxCheckbox = function (options) {
+    if (options.hash.value == null) {
+      throw new Error('docxCheckbox requires value parameter')
+    }
+
+    options.hash.value = options.hash.value === 'true' || options.hash.value === true
+
+    return '$docxCheckbox' + JSON.stringify(options.hash) + '$'
+  }
+
+  global.docxCombobox = function (options) {
+    return '$docxCombobox' + JSON.stringify(options.hash) + '$'
   }
 })(this)
