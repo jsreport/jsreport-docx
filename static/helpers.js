@@ -64,24 +64,14 @@
       )
     }
 
-    return JSON.stringify({
+    return '$docxImage' + JSON.stringify({
       src: options.hash.src,
       width: options.hash.width,
       height: options.hash.height,
       usePlaceholderSize:
         options.hash.usePlaceholderSize === true ||
         options.hash.usePlaceholderSize === 'true'
-    })
-  }
-
-  global.docxSelect = function (options) {
-    if (options.hash.value == null) {
-      throw new Error('docxdSelect requires value parameter')
-    }
-
-    options.hash.value = options.hash.value === 'true' || options.hash.value === true
-
-    return '$docxCheckbox' + JSON.stringify(options.hash) + '$'
+    }) + '$'
   }
 
   global.docxCheckbox = function (options) {
