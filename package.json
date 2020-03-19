@@ -50,15 +50,15 @@
     "eslint-plugin-babel": "5.3.0",
     "handlebars": "4.7.3",
     "jsreport-assets": "1.5.2",
-    "jsreport-core": "2.7.0",
+    "jsreport-core": "2.7.2",
     "jsreport-handlebars": "2.1.0",
     "jsreport-studio-dev": "1.5.0",
     "jsreport-templates": "2.3.2",
     "mocha": "6.1.4",
+    "nock": "11.7.2",
     "should": "13.2.3",
     "standard": "12.0.1",
-    "textract": "2.5.0",
-    "nock": "11.7.2"
+    "textract": "2.5.0"
   },
   "files": [
     "lib",
