@@ -1501,6 +1501,37 @@ describe('docx', () => {
       .textContent.should.be.eql('Boris')
   })
 
+  it('combobox form control with dynamic items in strings and special character', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(
+              path.join(__dirname, 'form-control-combo-dynamic-items.docx')
+            )
+          }
+        }
+      },
+      data: {
+        val: 'Boris$',
+        items: ['Jan$', 'Boris$']
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    doc.getElementsByTagName('w:sdtContent')[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('Boris$')
+  })
+
   it('page break in single paragraph', async () => {
     const result = await reporter.render({
       template: {

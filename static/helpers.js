@@ -64,14 +64,14 @@
       )
     }
 
-    return '$docxImage' + JSON.stringify({
+    return new Handlebars.SafeString('$docxImage' + Buffer.from(JSON.stringify({
       src: options.hash.src,
       width: options.hash.width,
       height: options.hash.height,
       usePlaceholderSize:
         options.hash.usePlaceholderSize === true ||
         options.hash.usePlaceholderSize === 'true'
-    }) + '$'
+    })).toString('base64') + '$')
   }
 
   global.docxCheckbox = function (options) {
@@ -81,10 +81,10 @@
 
     options.hash.value = options.hash.value === 'true' || options.hash.value === true
 
-    return '$docxCheckbox' + JSON.stringify(options.hash) + '$'
+    return new Handlebars.SafeString('$docxCheckbox' + Buffer.from(JSON.stringify(options.hash)).toString('base64') + '$')
   }
 
   global.docxCombobox = function (options) {
-    return '$docxCombobox' + JSON.stringify(options.hash) + '$'
+    return new Handlebars.SafeString('$docxCombobox' + Buffer.from(JSON.stringify(options.hash)).toString('base64') + '$')
   }
 })(this)
