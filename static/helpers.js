@@ -87,4 +87,20 @@
   global.docxCombobox = function (options) {
     return new Handlebars.SafeString('$docxCombobox' + Buffer.from(JSON.stringify(options.hash)).toString('base64') + '$')
   }
+
+  global.docxChart = function (options) {
+    if (options.hash.data == null) {
+      throw new Error('docxChart requires data parameter')
+    }
+
+    if (!Array.isArray(options.hash.data.labels) || options.hash.data.labels.length === 0) {
+      throw new Error('docxChart requires data with labels, data.labels must be an array with items')
+    }
+
+    if (!Array.isArray(options.hash.data.datasets) || options.hash.data.datasets.length === 0) {
+      throw new Error('docxChart requires data with datasets, data.datasets must be an array with items')
+    }
+
+    return new Handlebars.SafeString('$docxChart' + Buffer.from(JSON.stringify(options.hash)).toString('base64') + '$')
+  }
 })(this)
