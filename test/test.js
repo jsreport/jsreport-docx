@@ -1532,6 +1532,109 @@ describe('docx', () => {
       .textContent.should.be.eql('Boris$')
   })
 
+  it('chart', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 1]
+    }, {
+      label: 'Ser2',
+      data: [2, 3, 5]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.forEach((dataEl, idx) => {
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(datasets[idx].label)
+      nodeListToArray(dataEl.getElementsByTagName('c:cat')[0].getElementsByTagName('c:v')).map((el) => el.textContent).should.be.eql(labels)
+      nodeListToArray(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:v')).map((el) => parseInt(el.textContent, 10)).should.be.eql(datasets[idx].data)
+    })
+  })
+
+  it('chart error message when no data', async () => {
+    return reporter
+      .render({
+        template: {
+          engine: 'handlebars',
+          recipe: 'docx',
+          docx: {
+            templateAsset: {
+              content: fs.readFileSync(path.join(__dirname, 'chart-error-data.docx'))
+            }
+          }
+        },
+        data: {
+          chartData: null
+        }
+      })
+      .should.be.rejectedWith(/requires data parameter to be set/)
+  })
+
+  it('chart error message when no data.labels', async () => {
+    return reporter
+      .render({
+        template: {
+          engine: 'handlebars',
+          recipe: 'docx',
+          docx: {
+            templateAsset: {
+              content: fs.readFileSync(path.join(__dirname, 'chart-error-data.docx'))
+            }
+          }
+        },
+        data: {
+          chartData: {}
+        }
+      })
+      .should.be.rejectedWith(/requires data parameter with labels to be set/)
+  })
+
+  it('chart error message when no data.datasets', async () => {
+    return reporter
+      .render({
+        template: {
+          engine: 'handlebars',
+          recipe: 'docx',
+          docx: {
+            templateAsset: {
+              content: fs.readFileSync(path.join(__dirname, 'chart-error-data.docx'))
+            }
+          }
+        },
+        data: {
+          chartData: {
+            labels: ['Jan', 'Feb', 'March'],
+            datasets: null
+          }
+        }
+      })
+      .should.be.rejectedWith(/requires data parameter with datasets to be set/)
+  })
+
   it('page break in single paragraph', async () => {
     const result = await reporter.render({
       template: {

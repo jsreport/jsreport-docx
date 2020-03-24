@@ -76,7 +76,7 @@
 
   global.docxCheckbox = function (options) {
     if (options.hash.value == null) {
-      throw new Error('docxCheckbox requires value parameter')
+      throw new Error('docxCheckbox helper requires value parameter')
     }
 
     options.hash.value = options.hash.value === 'true' || options.hash.value === true
@@ -90,15 +90,15 @@
 
   global.docxChart = function (options) {
     if (options.hash.data == null) {
-      throw new Error('docxChart requires data parameter')
+      throw new Error('docxChart helper requires data parameter to be set')
     }
 
     if (!Array.isArray(options.hash.data.labels) || options.hash.data.labels.length === 0) {
-      throw new Error('docxChart requires data with labels, data.labels must be an array with items')
+      throw new Error('docxChart helper requires data parameter with labels to be set, data.labels must be an array with items')
     }
 
     if (!Array.isArray(options.hash.data.datasets) || options.hash.data.datasets.length === 0) {
-      throw new Error('docxChart requires data with datasets, data.datasets must be an array with items')
+      throw new Error('docxChart helper requires data parameter with datasets to be set, data.datasets must be an array with items')
     }
 
     return new Handlebars.SafeString('$docxChart' + Buffer.from(JSON.stringify(options.hash)).toString('base64') + '$')
