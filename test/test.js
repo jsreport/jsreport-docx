@@ -1575,6 +1575,90 @@ describe('docx', () => {
     })
   })
 
+  it('chart with title', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 1]
+    }, {
+      label: 'Ser2',
+      data: [2, 3, 5]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-with-title.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const chartTitleEl = doc.getElementsByTagName('c:title')[0].getElementsByTagName('a:t')[0]
+
+    chartTitleEl.textContent.should.be.eql('DEMO CHART')
+  })
+
+  it('chart with dynamic title', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 1]
+    }, {
+      label: 'Ser2',
+      data: [2, 3, 5]
+    }]
+    const chartTitle = 'CUSTOM CHART'
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-with-dynamic-title.docx'))
+          }
+        }
+      },
+      data: {
+        chartTitle,
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const chartTitleEl = doc.getElementsByTagName('c:title')[0].getElementsByTagName('a:t')[0]
+
+    chartTitleEl.textContent.should.be.eql(chartTitle)
+  })
+
   it('chart error message when no data', async () => {
     return reporter
       .render({
