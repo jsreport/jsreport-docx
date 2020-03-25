@@ -1753,6 +1753,45 @@ describe('docx', () => {
       .textContent.should.be.eql('break')
   })
 
+  it('page break in single paragraph (sharing text nodes)', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(
+              path.join(__dirname, 'page-break-single-paragraph2.docx')
+            )
+          }
+        }
+      },
+      data: {}
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const paragraphNodes = nodeListToArray(doc.getElementsByTagName('w:p'))
+
+    paragraphNodes[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('Demo')
+    paragraphNodes[1].getElementsByTagName('w:br').should.have.length(1)
+
+    paragraphNodes[1]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('of')
+
+    paragraphNodes[1]
+      .getElementsByTagName('w:t')[1]
+      .textContent.should.be.eql(' a break')
+  })
+
   it('page break between paragraphs', async () => {
     const result = await reporter.render({
       template: {
