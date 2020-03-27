@@ -1097,6 +1097,59 @@ describe('docx', () => {
     })
   })
 
+  it('image with hyperlink inside', async () => {
+    const imageBuf = fs.readFileSync(path.join(__dirname, 'image.png'))
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'image-with-hyperlink.docx'))
+          }
+        }
+      },
+      data: {
+        src: 'data:image/png;base64,' + imageBuf.toString('base64'),
+        url: 'https://jsreport.net'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const drawningEls = doc.getElementsByTagName('w:drawing')
+
+    drawningEls.length.should.be.eql(1)
+
+    const drawningEl = drawningEls[0]
+
+    const isImg = drawningEl.getElementsByTagName('pic:pic').length > 0
+
+    isImg.should.be.True()
+
+    const elLinkClick = drawningEl.getElementsByTagName('a:hlinkClick')[0]
+    const hyperlinkRelId = elLinkClick.getAttribute('r:id')
+
+    const docRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/document.xml.rels').data.toString()
+    )
+
+    const hyperlinkRelEl = nodeListToArray(docRels.getElementsByTagName('Relationship')).find((el) => {
+      return el.getAttribute('Id') === hyperlinkRelId
+    })
+
+    const target = decodeURIComponent(hyperlinkRelEl.getAttribute('Target'))
+
+    target.should.be.eql('https://jsreport.net')
+  })
+
   it('image error message when no src provided', async () => {
     return reporter
       .render({
@@ -1216,6 +1269,146 @@ describe('docx', () => {
       .should.be.rejectedWith(
         /docxImage helper requires height parameter to be valid number with unit/
       )
+  })
+
+  it('image loop', async () => {
+    const images = [
+      fs.readFileSync(path.join(__dirname, 'image.png')),
+      fs.readFileSync(path.join(__dirname, 'image2.png'))
+    ]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'image-loop.docx'))
+          }
+        }
+      },
+      data: {
+        photos: images.map((imageBuf) => {
+          return {
+            src: 'data:image/png;base64,' + imageBuf.toString('base64')
+          }
+        })
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const docRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/document.xml.rels').data.toString()
+    )
+
+    const drawningEls = nodeListToArray(doc.getElementsByTagName('w:drawing'))
+
+    drawningEls.length.should.be.eql(2)
+
+    drawningEls.forEach((drawningEl, idx) => {
+      const isImg = drawningEl.getElementsByTagName('pic:pic').length > 0
+
+      isImg.should.be.True()
+
+      const imageRelId = drawningEl.getElementsByTagName('a:blip')[0].getAttribute('r:embed')
+
+      const imageRelEl = nodeListToArray(docRels.getElementsByTagName('Relationship')).find((el) => {
+        return el.getAttribute('Id') === imageRelId
+      })
+
+      imageRelEl.getAttribute('Type').should.be.eql('http://schemas.openxmlformats.org/officeDocument/2006/relationships/image')
+
+      const imageFile = files.find(f => f.path === `word/${imageRelEl.getAttribute('Target')}`)
+
+      // compare returns 0 when buffers are equal
+      Buffer.compare(imageFile.data, images[idx]).should.be.eql(0)
+    })
+  })
+
+  it('image loop and hyperlink inside', async () => {
+    const images = [
+      {
+        url: 'https://jsreport.net',
+        buf: fs.readFileSync(path.join(__dirname, 'image.png'))
+      },
+      {
+        url: 'https://www.google.com/intl/es-419/chrome/',
+        buf: fs.readFileSync(path.join(__dirname, 'image2.png'))
+      }
+    ]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'image-loop-url.docx'))
+          }
+        }
+      },
+      data: {
+        photos: images.map((image) => {
+          return {
+            src: 'data:image/png;base64,' + image.buf.toString('base64'),
+            url: image.url
+          }
+        })
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const docRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/document.xml.rels').data.toString()
+    )
+
+    const drawningEls = nodeListToArray(doc.getElementsByTagName('w:drawing'))
+
+    drawningEls.length.should.be.eql(2)
+
+    drawningEls.forEach((drawningEl, idx) => {
+      const isImg = drawningEl.getElementsByTagName('pic:pic').length > 0
+
+      isImg.should.be.True()
+
+      const imageRelId = drawningEl.getElementsByTagName('a:blip')[0].getAttribute('r:embed')
+
+      const imageRelEl = nodeListToArray(docRels.getElementsByTagName('Relationship')).find((el) => {
+        return el.getAttribute('Id') === imageRelId
+      })
+
+      imageRelEl.getAttribute('Type').should.be.eql('http://schemas.openxmlformats.org/officeDocument/2006/relationships/image')
+
+      const imageFile = files.find(f => f.path === `word/${imageRelEl.getAttribute('Target')}`)
+
+      // compare returns 0 when buffers are equal
+      Buffer.compare(imageFile.data, images[idx].buf).should.be.eql(0)
+
+      const elLinkClick = drawningEl.getElementsByTagName('a:hlinkClick')[0]
+      const hyperlinkRelId = elLinkClick.getAttribute('r:id')
+
+      const hyperlinkRelEl = nodeListToArray(docRels.getElementsByTagName('Relationship')).find((el) => {
+        return el.getAttribute('Id') === hyperlinkRelId
+      })
+
+      const target = decodeURIComponent(hyperlinkRelEl.getAttribute('Target'))
+
+      target.should.be.eql(images[idx].url)
+    })
   })
 
   it('loop', async () => {
