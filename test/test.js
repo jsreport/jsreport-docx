@@ -1912,6 +1912,103 @@ describe('docx', () => {
       .should.be.rejectedWith(/requires data parameter with datasets to be set/)
   })
 
+  it('chart loop', async () => {
+    const charts = [{
+      chartData: {
+        labels: ['Jan', 'Feb', 'March'],
+        datasets: [{
+          label: 'Ser1',
+          data: [4, 5, 1]
+        }, {
+          label: 'Ser2',
+          data: [2, 3, 5]
+        }]
+      }
+    }, {
+      chartData: {
+        labels: ['Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Ser3',
+          data: [8, 2, 4]
+        }, {
+          label: 'Ser4',
+          data: [2, 5, 3]
+        }]
+      }
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-loop.docx'))
+          }
+        }
+      },
+      data: {
+        charts
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const chartDrawningEls = nodeListToArray(doc.getElementsByTagName('c:chart'))
+
+    chartDrawningEls.length.should.be.eql(charts.length)
+
+    const docRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/document.xml.rels').data.toString()
+    )
+
+    chartDrawningEls.forEach((chartDrawningEl, chartIdx) => {
+      const chartRelId = chartDrawningEl.getAttribute('r:id')
+
+      const chartRelEl = nodeListToArray(docRels.getElementsByTagName('Relationship')).find((el) => {
+        return el.getAttribute('Id') === chartRelId
+      })
+
+      const chartDoc = new DOMParser().parseFromString(
+        files.find(f => f.path === `word/${chartRelEl.getAttribute('Target')}`).data.toString()
+      )
+
+      const chartRelsDoc = new DOMParser().parseFromString(
+        files.find(f => f.path === `word/charts/_rels/${chartRelEl.getAttribute('Target').split('/').slice(-1)[0]}.rels`).data.toString()
+      )
+
+      const dataElements = nodeListToArray(chartDoc.getElementsByTagName('c:ser'))
+
+      dataElements.forEach((dataEl, idx) => {
+        dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(charts[chartIdx].chartData.datasets[idx].label)
+        nodeListToArray(dataEl.getElementsByTagName('c:cat')[0].getElementsByTagName('c:v')).map((el) => el.textContent).should.be.eql(charts[chartIdx].chartData.labels)
+        nodeListToArray(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:v')).map((el) => parseInt(el.textContent, 10)).should.be.eql(charts[chartIdx].chartData.datasets[idx].data)
+      })
+
+      const chartStyleRelEl = nodeListToArray(chartRelsDoc.getElementsByTagName('Relationship')).find((el) => {
+        return el.getAttribute('Type') === 'http://schemas.microsoft.com/office/2011/relationships/chartStyle'
+      })
+
+      const chartStyleDoc = files.find(f => f.path === `word/charts/${chartStyleRelEl.getAttribute('Target')}`)
+
+      chartStyleDoc.should.be.not.undefined()
+
+      const chartColorStyleRelEl = nodeListToArray(chartRelsDoc.getElementsByTagName('Relationship')).find((el) => {
+        return el.getAttribute('Type') === 'http://schemas.microsoft.com/office/2011/relationships/chartColorStyle'
+      })
+
+      const chartColorStyleDoc = files.find(f => f.path === `word/charts/${chartColorStyleRelEl.getAttribute('Target')}`)
+
+      chartColorStyleDoc.should.be.not.undefined()
+    })
+  })
+
   it('page break in single paragraph', async () => {
     const result = await reporter.render({
       template: {
