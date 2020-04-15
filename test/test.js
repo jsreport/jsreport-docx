@@ -15,13 +15,41 @@ async function getImageSize (buf) {
   const doc = new DOMParser().parseFromString(
     files.find(f => f.path === 'word/document.xml').data.toString()
   )
-  const elDrawing = doc.getElementsByTagName('w:drawing')[0]
-  const wpExtendEl = elDrawing.getElementsByTagName('wp:extent')[0]
+  const drawingEl = doc.getElementsByTagName('w:drawing')[0]
+  const pictureEl = findDirectPictureChild(drawingEl)
+  const aExtEl = pictureEl.getElementsByTagName('a:xfrm')[0].getElementsByTagName('a:ext')[0]
 
   return {
-    width: parseFloat(wpExtendEl.getAttribute('cx')),
-    height: parseFloat(wpExtendEl.getAttribute('cy'))
+    width: parseFloat(aExtEl.getAttribute('cx')),
+    height: parseFloat(aExtEl.getAttribute('cy'))
   }
+}
+
+function findDirectPictureChild (parentNode) {
+  const childNodes = parentNode.childNodes || []
+  let pictureEl
+
+  for (let i = 0; i < childNodes.length; i++) {
+    const child = childNodes[i]
+
+    if (child.nodeName === 'w:drawing') {
+      break
+    }
+
+    if (child.nodeName === 'pic:pic') {
+      pictureEl = child
+      break
+    }
+
+    const foundInChild = findDirectPictureChild(child)
+
+    if (foundInChild) {
+      pictureEl = foundInChild
+      break
+    }
+  }
+
+  return pictureEl
 }
 
 describe('docx', () => {
@@ -29,6 +57,9 @@ describe('docx', () => {
 
   beforeEach(() => {
     reporter = jsreport({
+      store: {
+        provider: 'memory'
+      },
       templatingEngines: {
         strategy: 'in-process'
       }
