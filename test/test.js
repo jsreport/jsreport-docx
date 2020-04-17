@@ -2059,6 +2059,7 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
 
     const files = await decompress()(result.content)
+
     const doc = new DOMParser().parseFromString(
       files.find(f => f.path === 'word/document.xml').data.toString()
     )
@@ -2068,9 +2069,10 @@ describe('docx', () => {
     paragraphNodes[0]
       .getElementsByTagName('w:t')[0]
       .textContent.should.be.eql('Demo')
-    paragraphNodes[1].getElementsByTagName('w:br').should.have.length(1)
-    paragraphNodes[1]
-      .getElementsByTagName('w:t')[0]
+
+    paragraphNodes[0].getElementsByTagName('w:br').should.have.length(1)
+    paragraphNodes[0]
+      .getElementsByTagName('w:t')[1]
       .textContent.should.be.eql('break')
   })
 
@@ -2093,6 +2095,7 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
 
     const files = await decompress()(result.content)
+
     const doc = new DOMParser().parseFromString(
       files.find(f => f.path === 'word/document.xml').data.toString()
     )
@@ -2102,15 +2105,12 @@ describe('docx', () => {
     paragraphNodes[0]
       .getElementsByTagName('w:t')[0]
       .textContent.should.be.eql('Demo')
-    paragraphNodes[1].getElementsByTagName('w:br').should.have.length(1)
 
-    paragraphNodes[1]
-      .getElementsByTagName('w:t')[0]
-      .textContent.should.be.eql('of')
+    paragraphNodes[0].getElementsByTagName('w:br').should.have.length(1)
 
-    paragraphNodes[1]
+    paragraphNodes[0]
       .getElementsByTagName('w:t')[1]
-      .textContent.should.be.eql(' a break')
+      .textContent.should.be.eql('of a break')
   })
 
   it('page break between paragraphs', async () => {
