@@ -901,6 +901,56 @@ describe('docx', () => {
     text.should.containEql('note site3')
   })
 
+  it('table nested', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table-nested.docx'))
+          }
+        }
+      },
+      data: {
+        people: [{
+          name: 'Rick',
+          lastname: 'Grimes',
+          courses: [{
+            name: 'Math1',
+            homeroom: '2389'
+          }, {
+            name: 'Math2',
+            homeroom: '3389'
+          }],
+          age: 38
+        }, {
+          name: 'Andrea',
+          lastname: 'Henderson',
+          courses: [{
+            name: 'Literature1',
+            homeroom: '5262'
+          }, {
+            name: 'Literature2',
+            homeroom: '1693'
+          }],
+          age: 33
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const text = await textract('test.docx', result.content)
+
+    text.should.containEql('Rick')
+    text.should.containEql('Andrea')
+    text.should.containEql('Math1')
+    text.should.containEql('Math2')
+    text.should.containEql('Literature1')
+    text.should.containEql('Literature2')
+  })
+
   it('style', async () => {
     const result = await reporter.render({
       template: {
