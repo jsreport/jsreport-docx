@@ -2090,6 +2090,40 @@ describe('docx', () => {
     })
   })
 
+  it('should not duplicate drawing object id in loop', async () => {
+    // drawing object should not contain duplicated id, otherwhise it produce a warning in ms word
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'dw-object-loop-id.docx'))
+          }
+        }
+      },
+      data: {
+        items: [1, 2, 3]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const drawingEls = nodeListToArray(doc.getElementsByTagName('w:drawing'))
+    const baseId = 12
+
+    drawingEls.forEach((drawingEl, idx) => {
+      const docPrEl = nodeListToArray(drawingEl.firstChild.childNodes).find((el) => el.nodeName === 'wp:docPr')
+      parseInt(docPrEl.getAttribute('id'), 10).should.be.eql(baseId + idx)
+    })
+  })
+
   it('page break in single paragraph', async () => {
     const result = await reporter.render({
       template: {
