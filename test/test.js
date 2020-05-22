@@ -638,6 +638,58 @@ describe('docx', () => {
     text.should.containEql('note 2n')
   })
 
+  it('list nested', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'list-nested.docx'))
+          }
+        }
+      },
+      data: {
+        items: [{
+          name: 'Boris',
+          items: [{
+            name: 'item1'
+          }, {
+            name: 'item2'
+          }]
+        }, {
+          name: 'Junior',
+          items: [{
+            name: 'item3'
+          }, {
+            name: 'item4'
+          }]
+        }, {
+          name: 'Jan',
+          items: [{
+            name: 'item5'
+          }, {
+            name: 'item6'
+          }]
+        }]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const text = await textract('test.docx', result.content)
+
+    text.should.containEql('Boris')
+    text.should.containEql('Junior')
+    text.should.containEql('Jan')
+    text.should.containEql('item1')
+    text.should.containEql('item2')
+    text.should.containEql('item3')
+    text.should.containEql('item4')
+    text.should.containEql('item5')
+    text.should.containEql('item6')
+  })
+
   it('variable-replace-and-list-after', async () => {
     const result = await reporter.render({
       template: {
