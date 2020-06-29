@@ -458,6 +458,33 @@ describe('docx', () => {
       .should.be.eql('https://github.com')
   })
 
+  it('link to bookmark should not break', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'link-to-bookmark.docx'))
+          }
+        }
+      },
+      data: {
+        acn: '2222222',
+        companyName: 'Demo'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+
+    text.should.containEql('1 Preliminary 1')
+    text.should.containEql('1.1 Name of the Company 1')
+    text.should.containEql('1.2 Type of Company 1')
+    text.should.containEql('1.3 Limited liability of Members 1')
+    text.should.containEql('1.4 The Guarantee 1')
+  })
+
   it('watermark', async () => {
     const result = await reporter.render({
       template: {
