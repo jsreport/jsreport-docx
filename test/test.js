@@ -2212,6 +2212,92 @@ describe('docx', () => {
     })
   })
 
+  it('chart should keep style defined in serie', async () => {
+    const labels = ['Q1', 'Q2', 'Q3', 'Q4']
+    const datasets = [{
+      label: 'Apples',
+      data: [100, 50, 10, 70]
+    }, {
+      label: 'Oranges',
+      data: [20, 30, 20, 40]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-serie-style.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.forEach((dataEl, idx) => {
+      should(dataEl.getElementsByTagName('c:spPr')[0]).be.not.undefined()
+    })
+  })
+
+  it('chart should keep number format defined in serie', async () => {
+    const labels = ['Q1', 'Q2', 'Q3', 'Q4']
+    const datasets = [{
+      label: 'Apples',
+      data: [10000.0, 50000.45, 10000.45, 70000.546]
+    }, {
+      label: 'Oranges',
+      data: [20000.3, 30000.2, 20000.4, 40000.4]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-serie-number-format.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.forEach((dataEl, idx) => {
+      should(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:formatCode')[0].textContent).be.eql('#,##0.0')
+    })
+  })
+
   it('should not duplicate drawing object id in loop', async () => {
     // drawing object should not contain duplicated id, otherwhise it produce a warning in ms word
     const result = await reporter.render({
