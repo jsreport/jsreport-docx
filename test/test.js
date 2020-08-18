@@ -2057,6 +2057,61 @@ describe('docx', () => {
     chartTitleEl.textContent.should.be.eql(chartTitle)
   })
 
+  it('scatter chart', async () => {
+    const labels = [
+      2.3,
+      1.4,
+      4.2,
+      3.1,
+      2.5
+    ]
+
+    const datasets = [{
+      label: 'Y Values',
+      data: [
+        4.6,
+        3.2,
+        5.4,
+        2.1,
+        1.5
+      ]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'scatter-chart.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.forEach((dataEl, idx) => {
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(datasets[idx].label)
+
+      nodeListToArray(dataEl.getElementsByTagName('c:xVal')[0].getElementsByTagName('c:v')).map((el) => el.textContent).should.be.eql(labels.map((l) => l.toString()))
+
+      nodeListToArray(dataEl.getElementsByTagName('c:yVal')[0].getElementsByTagName('c:v')).map((el) => parseFloat(el.textContent)).should.be.eql(datasets[idx].data)
+    })
+  })
+
   it('stock chart', async () => {
     const labels = [
       '2020-05-10',
