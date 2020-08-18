@@ -2247,6 +2247,113 @@ describe('docx', () => {
     })
   })
 
+  it('sunburst chart (chartex)', async () => {
+    const labels = [
+      [
+        'Rama 1',
+        'Rama 1',
+        'Rama 1',
+        'Rama 2',
+        'Rama 2',
+        'Rama 2',
+        'Rama 2',
+        'Rama 3'
+      ],
+      [
+        'Tallo 1',
+        'Tallo 1',
+        'Tallo 1',
+        'Tallo 2',
+        'Tallo 2',
+        'Tallo 2',
+        'Hoja 6',
+        'Hoja 7'
+      ],
+      [
+        'Hoja 1',
+        'Hoja 2',
+        'Hoja 3',
+        'Hoja 4',
+        'Hoja 5',
+        null,
+        null,
+        'Hoja 8'
+      ]
+    ]
+
+    const datasets = [{
+      label: 'Sunburst',
+      data: [
+        32,
+        68,
+        83,
+        72,
+        75,
+        84,
+        52,
+        34
+      ]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'sunburst-chart.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chartEx1.xml').data.toString()
+    )
+
+    const labelElement = (
+      doc.getElementsByTagName('cx:series')[0]
+        .getElementsByTagName('cx:txData')[0]
+        .getElementsByTagName('cx:v')[0]
+    )
+
+    const dataElement = doc.getElementsByTagName('cx:data')[0]
+
+    labelElement.textContent.should.be.eql(datasets[0].label)
+
+    const strDimElement = dataElement.getElementsByTagName('cx:strDim')[0]
+    const numDimElement = dataElement.getElementsByTagName('cx:numDim')[0]
+
+    strDimElement.getAttribute('type').should.be.eql('cat')
+    numDimElement.getAttribute('type').should.be.eql('size')
+
+    nodeListToArray(
+      strDimElement.getElementsByTagName('cx:lvl')
+    ).forEach((lvlEl, idx) => {
+      const targetLabels = labels.reverse()[idx]
+
+      nodeListToArray(lvlEl.getElementsByTagName('cx:pt')).forEach((dataEl, ydx) => {
+        dataEl.textContent.should.be.eql(targetLabels[ydx] || '')
+      })
+    })
+
+    nodeListToArray(
+      numDimElement
+        .getElementsByTagName('cx:lvl')[0]
+        .getElementsByTagName('cx:pt')
+    ).forEach((dataEl, idx) => {
+      parseFloat(dataEl.textContent).should.be.eql(datasets[0].data[idx])
+    })
+  })
+
   it('chart error message when no data', async () => {
     return reporter
       .render({
