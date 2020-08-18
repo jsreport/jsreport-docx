@@ -2140,6 +2140,85 @@ describe('docx', () => {
     })
   })
 
+  it('funnel chart (chartex)', async () => {
+    const labels = [
+      'Cat 1',
+      'Cat 2',
+      'Cat 3',
+      'Cat 4',
+      'Cat 5',
+      'Cat 6'
+    ]
+
+    const datasets = [{
+      label: 'Funnel',
+      data: [
+        3247,
+        5729,
+        1395,
+        2874,
+        6582,
+        1765
+      ]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'funnel-chart.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chartEx1.xml').data.toString()
+    )
+
+    const labelElement = (
+      doc.getElementsByTagName('cx:series')[0]
+        .getElementsByTagName('cx:txData')[0]
+        .getElementsByTagName('cx:v')[0]
+    )
+
+    const dataElement = doc.getElementsByTagName('cx:data')[0]
+
+    labelElement.textContent.should.be.eql(datasets[0].label)
+
+    const strDimElement = dataElement.getElementsByTagName('cx:strDim')[0]
+    const numDimElement = dataElement.getElementsByTagName('cx:numDim')[0]
+
+    strDimElement.getAttribute('type').should.be.eql('cat')
+    numDimElement.getAttribute('type').should.be.eql('val')
+
+    nodeListToArray(
+      strDimElement
+        .getElementsByTagName('cx:lvl')[0]
+        .getElementsByTagName('cx:pt')
+    ).forEach((dataEl, idx) => {
+      dataEl.textContent.should.be.eql(labels[idx])
+    })
+
+    nodeListToArray(
+      numDimElement
+        .getElementsByTagName('cx:lvl')[0]
+        .getElementsByTagName('cx:pt')
+    ).forEach((dataEl, idx) => {
+      parseFloat(dataEl.textContent).should.be.eql(datasets[0].data[idx])
+    })
+  })
+
   it('treemap chart (chartex)', async () => {
     const labels = [
       [
