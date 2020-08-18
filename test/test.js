@@ -2055,6 +2055,85 @@ describe('docx', () => {
     chartTitleEl.textContent.should.be.eql(chartTitle)
   })
 
+  it('waterfall chart (chartex)', async () => {
+    const labels = [
+      'Cat 1',
+      'Cat 2',
+      'Cat 3',
+      'Cat 4',
+      'Cat 5',
+      'Cat 5',
+      'Cat 6',
+      'Cat 8',
+      'Cat 9'
+    ]
+
+    const datasets = [{
+      label: 'Water Fall',
+      data: [
+        9702.0,
+        -210.3,
+        -24.0,
+        -674.0,
+        19.4,
+        -1406.9,
+        352.9,
+        2707.5,
+        10466.5
+      ]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'waterfall-chart.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chartEx1.xml').data.toString()
+    )
+
+    const labelElement = (
+      doc.getElementsByTagName('cx:series')[0]
+        .getElementsByTagName('cx:txData')[0]
+        .getElementsByTagName('cx:v')[0]
+    )
+
+    const dataElement = doc.getElementsByTagName('cx:data')[0]
+
+    labelElement.textContent.should.be.eql(datasets[0].label)
+
+    nodeListToArray(
+      dataElement.getElementsByTagName('cx:strDim')[0]
+        .getElementsByTagName('cx:lvl')[0]
+        .getElementsByTagName('cx:pt')
+    ).forEach((dataEl, idx) => {
+      dataEl.textContent.should.be.eql(labels[idx])
+    })
+
+    nodeListToArray(
+      dataElement.getElementsByTagName('cx:numDim')[0]
+        .getElementsByTagName('cx:lvl')[0]
+        .getElementsByTagName('cx:pt')
+    ).forEach((dataEl, idx) => {
+      parseFloat(dataEl.textContent).should.be.eql(datasets[0].data[idx])
+    })
+  })
+
   it('chart error message when no data', async () => {
     return reporter
       .render({
