@@ -5,6 +5,8 @@ const fs = require('fs')
 const path = require('path')
 const util = require('util')
 const { DOMParser } = require('xmldom')
+const moment = require('moment')
+const toExcelDate = require('js-excel-date-convert').toExcelDate
 const { decompress } = require('jsreport-office')
 const sizeOf = require('image-size')
 const textract = util.promisify(require('textract').fromBufferWithName)
@@ -2053,6 +2055,77 @@ describe('docx', () => {
     const chartTitleEl = doc.getElementsByTagName('c:title')[0].getElementsByTagName('a:t')[0]
 
     chartTitleEl.textContent.should.be.eql(chartTitle)
+  })
+
+  it('stock chart', async () => {
+    const labels = [
+      '2020-05-10',
+      '2020-06-10',
+      '2020-07-10',
+      '2020-08-10'
+    ]
+
+    const datasets = [{
+      label: 'High',
+      data: [
+        43,
+        56,
+        24,
+        36
+      ]
+    }, {
+      label: 'Low',
+      data: [
+        17,
+        25,
+        47,
+        32
+      ]
+    }, {
+      label: 'Close',
+      data: [
+        19,
+        42,
+        29,
+        33
+      ]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'stock-chart.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.forEach((dataEl, idx) => {
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(datasets[idx].label)
+
+      nodeListToArray(dataEl.getElementsByTagName('c:cat')[0].getElementsByTagName('c:v')).map((el) => el.textContent).should.be.eql(labels.map((l) => {
+        return toExcelDate(moment(l).toDate()).toString()
+      }))
+
+      nodeListToArray(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:v')).map((el) => parseInt(el.textContent, 10)).should.be.eql(datasets[idx].data)
+    })
   })
 
   it('waterfall chart (chartex)', async () => {
