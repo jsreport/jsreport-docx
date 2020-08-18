@@ -2506,6 +2506,94 @@ describe('docx', () => {
     })
   })
 
+  it('clusteredColumn (chartex)', async () => {
+    const labels = [null]
+
+    const datasets = [{
+      label: 'clusteredColumn',
+      data: [
+        1,
+        3,
+        3,
+        3,
+        7,
+        7,
+        7,
+        7,
+        9,
+        9,
+        9,
+        10,
+        10,
+        13,
+        13,
+        14,
+        15,
+        15,
+        15,
+        18,
+        18,
+        18,
+        19,
+        19,
+        21,
+        21,
+        22,
+        22,
+        24,
+        25
+      ]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'clusteredColumn-chart.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chartEx1.xml').data.toString()
+    )
+
+    const labelElement = (
+      doc.getElementsByTagName('cx:series')[0]
+        .getElementsByTagName('cx:txData')[0]
+        .getElementsByTagName('cx:v')[0]
+    )
+
+    const dataElement = doc.getElementsByTagName('cx:data')[0]
+
+    labelElement.textContent.should.be.eql(datasets[0].label)
+
+    const strDimElement = dataElement.getElementsByTagName('cx:strDim')[0]
+    const numDimElement = dataElement.getElementsByTagName('cx:numDim')[0]
+
+    should(strDimElement).be.not.ok()
+    numDimElement.getAttribute('type').should.be.eql('val')
+
+    nodeListToArray(
+      numDimElement
+        .getElementsByTagName('cx:lvl')[0]
+        .getElementsByTagName('cx:pt')
+    ).forEach((dataEl, idx) => {
+      parseFloat(dataEl.textContent).should.be.eql(datasets[0].data[idx])
+    })
+  })
+
   it('chart error message when no data', async () => {
     return reporter
       .render({
