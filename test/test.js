@@ -1032,6 +1032,42 @@ describe('docx', () => {
     text.should.containEql('Literature2')
   })
 
+  it('table vertical', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table-vertical.docx'))
+          }
+        }
+      },
+      data: {
+        people: [
+          {
+            name: 'Jan',
+            email: 'jan.blaha@foo.com'
+          },
+          {
+            name: 'Boris',
+            email: 'boris@foo.met'
+          },
+          {
+            name: 'Pavel',
+            email: 'pavel@foo.met'
+          }
+        ]
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('Jan')
+    text.should.containEql('Boris')
+    text.should.containEql('Pavel')
+  })
+
   it('style', async () => {
     const result = await reporter.render({
       template: {
