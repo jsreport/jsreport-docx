@@ -12,7 +12,40 @@
     return Handlebars.helpers.each(data, options)
   }
   global.docxTable = function (data, options) {
-    return Handlebars.helpers.each(data, options)
+    let currentData
+    const optionsToUse = options == null ? data : options
+
+    if (
+      arguments.length === 1 &&
+      (optionsToUse.hash.hasOwnProperty('rows') || optionsToUse.hash.hasOwnProperty('columns') || optionsToUse.hash.hasOwnProperty('ignore'))
+    ) {
+      // full table mode
+      if (optionsToUse.hash.hasOwnProperty('rows')) {
+        if (!optionsToUse.hash.hasOwnProperty('columns')) {
+          throw new Error('docxTable full table mode needs to have both rows and columns defined as params when processing row')
+        }
+
+        currentData = optionsToUse.hash.rows
+
+        const newData = Handlebars.createFrame(optionsToUse.data)
+        newData.rowColumns = optionsToUse.hash.columns
+        optionsToUse.data = newData
+      } else {
+        if (optionsToUse.hash.columns) {
+          currentData = optionsToUse.hash.columns
+        } else if (optionsToUse.data && optionsToUse.data.rowColumns) {
+          currentData = optionsToUse.data.rowColumns
+        } else {
+          throw new Error('docxTable full table mode needs to have columns defined when processing column')
+        }
+      }
+
+      return Handlebars.helpers.each(currentData, optionsToUse)
+    } else {
+      currentData = data
+    }
+
+    return Handlebars.helpers.each(currentData, optionsToUse)
   }
   global.docxStyle = function (options) {
     return new Handlebars.SafeString(

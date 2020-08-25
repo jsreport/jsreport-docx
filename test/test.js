@@ -1064,8 +1064,44 @@ describe('docx', () => {
     fs.writeFileSync('out.docx', result.content)
     const text = await textract('test.docx', result.content)
     text.should.containEql('Jan')
+    text.should.containEql('jan.blaha@foo.com')
     text.should.containEql('Boris')
+    text.should.containEql('boris@foo.met')
     text.should.containEql('Pavel')
+    text.should.containEql('pavel@foo.met')
+  })
+
+  it('table rows, columns', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table-rows-columns.docx'))
+          }
+        }
+      },
+      data: {
+        rowsItems: [
+          ['Jan', 'jan.blaha@foo.com'],
+          ['Boris', 'boris@foo.met'],
+          ['Pavel', 'pavel@foo.met']
+        ],
+        columnsItems: ['Name', 'Email']
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('Name')
+    text.should.containEql('Email')
+    text.should.containEql('Jan')
+    text.should.containEql('jan.blaha@foo.com')
+    text.should.containEql('Boris')
+    text.should.containEql('boris@foo.met')
+    text.should.containEql('Pavel')
+    text.should.containEql('pavel@foo.met')
   })
 
   it('style', async () => {
