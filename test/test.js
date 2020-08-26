@@ -1104,6 +1104,106 @@ describe('docx', () => {
     text.should.containEql('pavel@foo.met')
   })
 
+  it('table rows, columns (block)', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table-rows-columns-block.docx'))
+          }
+        }
+      },
+      data: {
+        rowsItems: [
+          ['Jan', 'jan.blaha@foo.com'],
+          ['Boris', 'boris@foo.met'],
+          ['Pavel', 'pavel@foo.met']
+        ],
+        columnsItems: ['Name', 'Email']
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('Name')
+    text.should.containEql('Email')
+    text.should.containEql('Jan')
+    text.should.containEql('jan.blaha@foo.com')
+    text.should.containEql('Boris')
+    text.should.containEql('boris@foo.met')
+    text.should.containEql('Pavel')
+    text.should.containEql('pavel@foo.met')
+  })
+
+  it('table rows, columns (block and data index)', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table-rows-columns-block-index.docx'))
+          }
+        }
+      },
+      data: {
+        rowsItems: [
+          ['Jan', 'jan.blaha@foo.com'],
+          ['Boris', 'boris@foo.met'],
+          ['Pavel', 'pavel@foo.met']
+        ],
+        columnsItems: ['Name', 'Email']
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('0-0')
+    text.should.containEql('0-1')
+    text.should.containEql('1-0')
+    text.should.containEql('1-1')
+    text.should.containEql('2-0')
+    text.should.containEql('2-1')
+    text.should.containEql('3-0')
+    text.should.containEql('3-1')
+  })
+
+  it('table rows, columns (block and access to parent context)', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'table-rows-columns-block-parent.docx'))
+          }
+        }
+      },
+      data: {
+        title: 'My Table',
+        rowsItems: [
+          ['Jan', 'jan.blaha@foo.com'],
+          ['Boris', 'boris@foo.met'],
+          ['Pavel', 'pavel@foo.met']
+        ],
+        columnsItems: ['Name', 'Email']
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('My Table - Name')
+    text.should.containEql('My Table - Email')
+    text.should.containEql('My Table - Jan')
+    text.should.containEql('My Table - jan.blaha@foo.com')
+    text.should.containEql('My Table - Boris')
+    text.should.containEql('My Table - boris@foo.met')
+    text.should.containEql('My Table - Pavel')
+    text.should.containEql('My Table - pavel@foo.met')
+  })
+
   it('style', async () => {
     const result = await reporter.render({
       template: {

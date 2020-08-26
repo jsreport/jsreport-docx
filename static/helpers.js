@@ -28,19 +28,57 @@
         currentData = optionsToUse.hash.rows
 
         const newData = Handlebars.createFrame(optionsToUse.data)
-        newData.rowColumns = optionsToUse.hash.columns
+        newData.rows = optionsToUse.hash.rows
+        newData.columns = optionsToUse.hash.columns
         optionsToUse.data = newData
+
+        const chunks = []
+
+        if (!currentData || !Array.isArray(currentData)) {
+          return new Handlebars.SafeString('')
+        }
+
+        for (let i = 0; i < currentData.length; i++) {
+          newData.index = i
+          chunks.push(optionsToUse.fn(this, { data: newData }))
+        }
+
+        return new Handlebars.SafeString(chunks.join(''))
       } else {
+        let isInsideRowHelper = false
+
         if (optionsToUse.hash.columns) {
           currentData = optionsToUse.hash.columns
-        } else if (optionsToUse.data && optionsToUse.data.rowColumns) {
-          currentData = optionsToUse.data.rowColumns
+        } else if (optionsToUse.data && optionsToUse.data.columns) {
+          isInsideRowHelper = true
+          currentData = optionsToUse.data.columns
         } else {
           throw new Error('docxTable full table mode needs to have columns defined when processing column')
         }
-      }
 
-      return Handlebars.helpers.each(currentData, optionsToUse)
+        const chunks = []
+
+        const newData = Handlebars.createFrame(optionsToUse.data)
+        const rowIndex = newData.index || 0
+
+        delete newData.index
+        delete newData.key
+        delete newData.first
+        delete newData.last
+
+        if (!currentData || !Array.isArray(currentData)) {
+          return new Handlebars.SafeString('')
+        }
+
+        for (const [idx, item] of currentData.entries()) {
+          // rowIndex + 1 because this is technically the second row on table after the row of table headers
+          newData.rowIndex = isInsideRowHelper ? rowIndex + 1 : 0
+          newData.columnIndex = idx
+          chunks.push(optionsToUse.fn(isInsideRowHelper ? optionsToUse.data.rows[rowIndex][idx] : item, { data: newData }))
+        }
+
+        return new Handlebars.SafeString(chunks.join(''))
+      }
     } else {
       currentData = data
     }
