@@ -4,7 +4,7 @@ const path = require('path')
 const fs = require('fs')
 const extractZip = require('extract-zip')
 const ZFolder = require('zfolder')
-const prettier = require('prettier')
+const format = require('xml-formatter')
 
 const desktopPath = path.join(os.homedir(), 'Desktop')
 
@@ -46,12 +46,10 @@ async function extract (docxPathArg) {
   const xmlFiles = await getXMLFilesContent(outputPath)
 
   for (const { fullPath, content } of xmlFiles) {
-    const xmlFormatted = prettier.format(content, {
-      printWidth: Infinity,
-      xmlWhitespaceSensitivity: 'ignore',
-      xmlSelfClosingSpace: false,
-      parser: 'xml',
-      plugins: [require.resolve('@prettier/plugin-xml')]
+    const xmlFormatted = format(content, {
+      indentation: '  ',
+      collapseContent: true,
+      lineSeparator: '\n'
     })
 
     await fs.promises.writeFile(fullPath, xmlFormatted)
