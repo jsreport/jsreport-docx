@@ -3330,6 +3330,56 @@ describe('docx', () => {
 
     result.content.toString().should.containEql('iframe')
   })
+
+  it('text nodes with xml:space="preserve" should continue to exists when needed', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'preserve-space.docx'))
+          }
+        }
+      },
+      data: {
+        title: 'My Table',
+        rowsItems: [
+          ['Jan', 'jan.blaha@foo.com'],
+          ['Boris', 'boris@foo.met'],
+          ['Pavel', 'pavel@foo.met']
+        ],
+        columnsItems: ['Name', 'Email']
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('My Table - Name')
+    text.should.containEql('My Table - Email')
+    text.should.containEql('My Table - Jan')
+    text.should.containEql('My Table - jan.blaha@foo.com')
+    text.should.containEql('My Table - Boris')
+    text.should.containEql('My Table - boris@foo.met')
+    text.should.containEql('My Table - Pavel')
+    text.should.containEql('My Table - pavel@foo.met')
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const textElements = nodeListToArray(doc.getElementsByTagName('w:t')).filter((node) => {
+      return node.textContent === 'My Table - '
+    })
+
+    textElements.should.have.length(8)
+
+    textElements.forEach((node) => {
+      node.getAttribute('xml:space').should.be.eql('preserve')
+    })
+  })
 })
 
 describe('docx with extensions.docx.previewInWordOnline === false', () => {
