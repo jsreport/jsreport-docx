@@ -3380,6 +3380,89 @@ describe('docx', () => {
       node.getAttribute('xml:space').should.be.eql('preserve')
     })
   })
+
+  it('remove nodes that were just containing block helper definition calls', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'remove-block.docx'))
+          }
+        }
+      },
+      data: {
+        title: 'My Table',
+        rowsItems: [
+          ['Jan', 'jan.blaha@foo.com'],
+          ['Boris', 'boris@foo.met'],
+          ['Pavel', 'pavel@foo.met']
+        ],
+        columnsItems: ['Name', 'Email']
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('My Table - Name')
+    text.should.containEql('My Table - Email')
+    text.should.containEql('My Table - Jan')
+    text.should.containEql('My Table - jan.blaha@foo.com')
+    text.should.containEql('My Table - Boris')
+    text.should.containEql('My Table - boris@foo.met')
+    text.should.containEql('My Table - Pavel')
+    text.should.containEql('My Table - pavel@foo.met')
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const textElements = nodeListToArray(doc.getElementsByTagName('w:t')).filter((node) => {
+      return node.textContent === 'My Table - '
+    })
+
+    textElements.should.have.length(8)
+
+    textElements.should.matchEach((tNode) => {
+      const rNode = tNode.parentNode
+      const pNode = rNode.parentNode
+
+      let previousNode = rNode.previousSibling
+      let previousRNode
+
+      while (previousNode != null) {
+        if (previousNode.nodeName === 'w:r') {
+          previousRNode = previousNode
+          break
+        }
+
+        previousNode = previousNode.previousSibling
+      }
+
+      if (previousRNode != null) {
+        throw new Error('there should be no previous w:r node in the table cell')
+      }
+
+      let nextNode = pNode.nextSibling
+      let nextPNode
+
+      while (nextNode != null) {
+        if (nextNode.nodeName === 'w:p') {
+          nextPNode = nextNode
+          break
+        }
+
+        nextNode = nextNode.nextSibling
+      }
+
+      if (nextPNode != null) {
+        throw new Error('there should be no next w:p node in the table cell')
+      }
+    })
+  })
 })
 
 describe('docx with extensions.docx.previewInWordOnline === false', () => {
