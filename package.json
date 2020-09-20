@@ -43,6 +43,7 @@
     "jsreport-office": "1.2.0",
     "moment": "2.27.0",
     "semaphore-async-await": "1.5.1",
+    "serializator": "github:jsreport/serializator#v3",
     "string-replace-async": "1.2.1",
     "unescape": "1.0.1",
     "xmldom": "0.1.27"
@@ -53,7 +54,7 @@
     "eslint-plugin-babel": "5.3.1",
     "handlebars": "4.7.6",
     "jsreport-assets": "1.7.0",
-    "jsreport-core": "2.10.0",
+    "jsreport-core": "github:jsreport/jsreport-core#v3",
     "jsreport-handlebars": "2.1.0",
     "jsreport-studio-dev": "1.6.0",
     "jsreport-templates": "2.4.0",
