@@ -91,6 +91,13 @@
     )
   }
 
+  global.docxMultiLine = function (data, options) {
+    if (data && options.fn) {
+      return Handlebars.helpers.each(data.split('\n'), options)
+    }
+    return ''
+  }
+
   global.docxImage = function (options) {
     if (!options.hash.src) {
       throw new Error(

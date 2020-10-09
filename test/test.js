@@ -565,6 +565,28 @@ describe('docx', () => {
     text.should.containEql('Boris')
   })
 
+  it('multi-line', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'multi-line.docx'))
+          }
+        }
+      },
+      data: {
+        text: 'Jon\nBoris\nAnne'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+    const text = await textract('test.docx', result.content)
+    text.should.containEql('Jon')
+    text.should.containEql('Boris')
+  })
+
   it('list and links', async () => {
     const result = await reporter.render({
       template: {
