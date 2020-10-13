@@ -172,6 +172,16 @@
       throw new Error('docxChart helper requires data parameter with datasets to be set, data.datasets must be an array with items')
     }
 
+    if (
+      options.hash.options != null &&
+      (
+        typeof options.hash.options !== 'object' ||
+        Array.isArray(options.hash.options)
+      )
+    ) {
+      throw new Error('docxChart helper when options parameter is set, it should be an object')
+    }
+
     return new Handlebars.SafeString('$docxChart' + Buffer.from(JSON.stringify(options.hash)).toString('base64') + '$')
   }
 })(this)
