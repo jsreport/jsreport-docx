@@ -2102,6 +2102,489 @@ describe('docx', () => {
     })
   })
 
+  it('chart should allow adding more data series than the ones defined in template', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 1]
+    }, {
+      label: 'Ser2',
+      data: [2, 3, 5]
+    }, {
+      label: 'Ser3',
+      data: [8, 2, 4]
+    }, {
+      label: 'Ser4',
+      data: [7, 5, 2]
+    }, {
+      label: 'Ser5',
+      data: [6, 5, 4]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-data-series.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.should.have.length(5)
+
+    dataElements.forEach((dataEl, idx) => {
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(datasets[idx].label)
+      nodeListToArray(dataEl.getElementsByTagName('c:cat')[0].getElementsByTagName('c:v')).map((el) => el.textContent).should.be.eql(labels)
+      nodeListToArray(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:v')).map((el) => parseInt(el.textContent, 10)).should.be.eql(datasets[idx].data)
+    })
+  })
+
+  it('chart should allow adding less data series than the ones defined in template', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 1]
+    }, {
+      label: 'Ser2',
+      data: [2, 3, 5]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-data-series.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.should.have.length(2)
+
+    dataElements.forEach((dataEl, idx) => {
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(datasets[idx].label)
+      nodeListToArray(dataEl.getElementsByTagName('c:cat')[0].getElementsByTagName('c:v')).map((el) => el.textContent).should.be.eql(labels)
+      nodeListToArray(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:v')).map((el) => parseInt(el.textContent, 10)).should.be.eql(datasets[idx].data)
+    })
+  })
+
+  it('chart should allow producing chart with serie with empty values', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+
+    const datasets = [{
+      label: 'Ser1',
+      data: []
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-data-series.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.should.have.length(1)
+
+    dataElements.forEach((dataEl, idx) => {
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(datasets[idx].label)
+      nodeListToArray(dataEl.getElementsByTagName('c:cat')[0].getElementsByTagName('c:v')).map((el) => el.textContent).should.be.eql(labels)
+      parseInt(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:ptCount')[0].getAttribute('val'), 10).should.be.eql(labels.length)
+      nodeListToArray(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:v')).should.have.length(0)
+    })
+  })
+
+  it('chart should allow axis configuration for display', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 1]
+    }, {
+      label: 'Ser2',
+      data: [2, 3, 5]
+    }, {
+      label: 'Ser3',
+      data: [8, 2, 4]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-options-axis.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        },
+        chartOptions: {
+          scales: {
+            xAxes: [{
+              display: false
+            }]
+          }
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const chartPlotAreaEl = doc.getElementsByTagName('c:plotArea')[0]
+
+    const existingAxesNodes = []
+
+    for (let i = 0; i < chartPlotAreaEl.childNodes.length; i++) {
+      const currentNode = chartPlotAreaEl.childNodes[i]
+
+      if (currentNode.nodeName === 'c:catAx' || currentNode.nodeName === 'c:valAx') {
+        existingAxesNodes.push(currentNode)
+      }
+    }
+
+    const mainXAxisEl = existingAxesNodes[0]
+    const deleteEl = findChildNode('c:delete', mainXAxisEl)
+
+    deleteEl.getAttribute('val').should.be.eql('1')
+  })
+
+  it('chart should allow axis configuration for min value', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 7]
+    }, {
+      label: 'Ser2',
+      data: [4, 3, 5]
+    }, {
+      label: 'Ser3',
+      data: [8, 6, 9]
+    }]
+
+    const minConfig = 2
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-options-axis.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        },
+        chartOptions: {
+          scales: {
+            yAxes: [{
+              ticks: {
+                min: minConfig
+              }
+            }]
+          }
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const chartPlotAreaEl = doc.getElementsByTagName('c:plotArea')[0]
+
+    const existingAxesNodes = []
+
+    for (let i = 0; i < chartPlotAreaEl.childNodes.length; i++) {
+      const currentNode = chartPlotAreaEl.childNodes[i]
+
+      if (currentNode.nodeName === 'c:catAx' || currentNode.nodeName === 'c:valAx') {
+        existingAxesNodes.push(currentNode)
+      }
+    }
+
+    const mainYAxisEl = existingAxesNodes[1]
+    const scalingEl = findChildNode('c:scaling', mainYAxisEl)
+    const minEl = findChildNode('c:min', scalingEl)
+
+    parseInt(minEl.getAttribute('val'), 10).should.be.eql(minConfig)
+  })
+
+  it('chart should allow axis configuration for max value', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 7]
+    }, {
+      label: 'Ser2',
+      data: [4, 3, 5]
+    }, {
+      label: 'Ser3',
+      data: [8, 6, 9]
+    }]
+
+    const maxConfig = 12
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-options-axis.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        },
+        chartOptions: {
+          scales: {
+            yAxes: [{
+              ticks: {
+                max: maxConfig
+              }
+            }]
+          }
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const chartPlotAreaEl = doc.getElementsByTagName('c:plotArea')[0]
+
+    const existingAxesNodes = []
+
+    for (let i = 0; i < chartPlotAreaEl.childNodes.length; i++) {
+      const currentNode = chartPlotAreaEl.childNodes[i]
+
+      if (currentNode.nodeName === 'c:catAx' || currentNode.nodeName === 'c:valAx') {
+        existingAxesNodes.push(currentNode)
+      }
+    }
+
+    const mainYAxisEl = existingAxesNodes[1]
+    const scalingEl = findChildNode('c:scaling', mainYAxisEl)
+    const maxEl = findChildNode('c:max', scalingEl)
+
+    parseInt(maxEl.getAttribute('val'), 10).should.be.eql(maxConfig)
+  })
+
+  it('chart should allow axis configuration for min, max values', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 7]
+    }, {
+      label: 'Ser2',
+      data: [4, 3, 5]
+    }, {
+      label: 'Ser3',
+      data: [8, 6, 9]
+    }]
+
+    const minConfig = 2
+    const maxConfig = 12
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-options-axis.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        },
+        chartOptions: {
+          scales: {
+            yAxes: [{
+              ticks: {
+                min: minConfig,
+                max: maxConfig
+              }
+            }]
+          }
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const chartPlotAreaEl = doc.getElementsByTagName('c:plotArea')[0]
+
+    const existingAxesNodes = []
+
+    for (let i = 0; i < chartPlotAreaEl.childNodes.length; i++) {
+      const currentNode = chartPlotAreaEl.childNodes[i]
+
+      if (currentNode.nodeName === 'c:catAx' || currentNode.nodeName === 'c:valAx') {
+        existingAxesNodes.push(currentNode)
+      }
+    }
+
+    const mainYAxisEl = existingAxesNodes[1]
+    const scalingEl = findChildNode('c:scaling', mainYAxisEl)
+    const minEl = findChildNode('c:min', scalingEl)
+    const maxEl = findChildNode('c:max', scalingEl)
+
+    parseInt(minEl.getAttribute('val'), 10).should.be.eql(minConfig)
+    parseInt(maxEl.getAttribute('val'), 10).should.be.eql(maxConfig)
+  })
+
+  it('chart should allow axis configuration for stepSize value', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 7]
+    }, {
+      label: 'Ser2',
+      data: [4, 3, 5]
+    }, {
+      label: 'Ser3',
+      data: [8, 6, 9]
+    }]
+
+    const stepSizeConfig = 3
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-options-axis.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        },
+        chartOptions: {
+          scales: {
+            yAxes: [{
+              ticks: {
+                stepSize: stepSizeConfig
+              }
+            }]
+          }
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const chartPlotAreaEl = doc.getElementsByTagName('c:plotArea')[0]
+
+    const existingAxesNodes = []
+
+    for (let i = 0; i < chartPlotAreaEl.childNodes.length; i++) {
+      const currentNode = chartPlotAreaEl.childNodes[i]
+
+      if (currentNode.nodeName === 'c:catAx' || currentNode.nodeName === 'c:valAx') {
+        existingAxesNodes.push(currentNode)
+      }
+    }
+
+    const mainYAxisEl = existingAxesNodes[1]
+    const majorUnitEl = findChildNode('c:majorUnit', mainYAxisEl)
+
+    parseInt(majorUnitEl.getAttribute('val'), 10).should.be.eql(stepSizeConfig)
+  })
+
   it('chart without style, color xml files', async () => {
     const labels = ['Q1', 'Q2', 'Q3', 'Q4']
     const datasets = [{
@@ -2409,6 +2892,76 @@ describe('docx', () => {
       }))
 
       nodeListToArray(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:v')).map((el) => parseInt(el.textContent, 10)).should.be.eql(datasets[idx].data)
+    })
+  })
+
+  it('combo chart (chart that uses a different chart type per data serie)', async () => {
+    const labels = ['Jan', 'Feb', 'March']
+
+    const datasets = [{
+      label: 'Ser1',
+      data: [4, 5, 1]
+    }, {
+      label: 'Ser2',
+      data: [2, 3, 5]
+    }, {
+      label: 'Ser3',
+      data: [8, 2, 4]
+    }, {
+      label: 'Ser4',
+      data: [7, 5, 2]
+    }, {
+      label: 'Ser5',
+      data: [6, 5, 4]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'combo-chart.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const barChart = doc.getElementsByTagName('c:barChart')[0]
+    const lineChart = doc.getElementsByTagName('c:lineChart')[0]
+
+    const barChartDataElements = nodeListToArray(barChart.getElementsByTagName('c:ser'))
+    const lineChartDataElements = nodeListToArray(lineChart.getElementsByTagName('c:ser'))
+
+    barChartDataElements.should.have.length(2)
+    lineChartDataElements.should.have.length(3)
+
+    barChartDataElements.forEach((dataEl, idx) => {
+      const currentDatasets = datasets.slice(0, 2)
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(currentDatasets[idx].label)
+      nodeListToArray(dataEl.getElementsByTagName('c:cat')[0].getElementsByTagName('c:v')).map((el) => el.textContent).should.be.eql(labels)
+      nodeListToArray(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:v')).map((el) => parseInt(el.textContent, 10)).should.be.eql(currentDatasets[idx].data)
+    })
+
+    lineChartDataElements.forEach((dataEl, idx) => {
+      const currentDatasets = datasets.slice(2)
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(currentDatasets[idx].label)
+      nodeListToArray(dataEl.getElementsByTagName('c:cat')[0].getElementsByTagName('c:v')).map((el) => el.textContent).should.be.eql(labels)
+      nodeListToArray(dataEl.getElementsByTagName('c:val')[0].getElementsByTagName('c:v')).map((el) => parseInt(el.textContent, 10)).should.be.eql(currentDatasets[idx].data)
     })
   })
 
@@ -3507,3 +4060,23 @@ describe('docx with extensions.docx.previewInWordOnline === false', () => {
     result.content.toString().should.not.containEql('iframe')
   })
 })
+
+function findChildNode (nodeName, targetNode, allNodes = false) {
+  let result = []
+
+  for (let i = 0; i < targetNode.childNodes.length; i++) {
+    let found = false
+    const childNode = targetNode.childNodes[i]
+
+    if (childNode.nodeName === nodeName) {
+      found = true
+      result.push(childNode)
+    }
+
+    if (found && !allNodes) {
+      break
+    }
+  }
+
+  return allNodes ? result : result[0]
+}
