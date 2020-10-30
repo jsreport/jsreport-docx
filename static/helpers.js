@@ -1,11 +1,22 @@
 /* eslint no-unused-vars: 1 */
 /* eslint no-new-func: 0 */
 /* *global __rootDirectory */
-;(function (global) {
+; (function (global) {
   const Handlebars = require('handlebars')
 
   global.docxPageBreak = function () {
     return new Handlebars.SafeString('')
+  }
+
+  global.docxRaw = function (data) {
+    if (typeof data === 'string') {
+      if (data.startsWith('<w:r')) {
+        return new Handlebars.SafeString(data)
+      }
+    }
+
+    // Wrap not valid XML data as a literal, without any style
+    return new Handlebars.SafeString('<w:r><w:t>' + data + '</w:t></w:r>')
   }
 
   global.docxList = function (data, options) {
@@ -106,7 +117,7 @@
     ) {
       throw new Error(
         'docxImage helper requires src parameter to be valid data uri for png or jpeg image or a valid url. Got ' +
-          options.hash.src
+        options.hash.src
       )
     }
 
@@ -121,7 +132,7 @@
     ) {
       throw new Error(
         'docxImage helper requires width parameter to be valid number with unit (cm or px). got ' +
-          options.hash.width
+        options.hash.width
       )
     }
 
@@ -131,7 +142,7 @@
     ) {
       throw new Error(
         'docxImage helper requires height parameter to be valid number with unit (cm or px). got ' +
-          options.hash.height
+        options.hash.height
       )
     }
 
