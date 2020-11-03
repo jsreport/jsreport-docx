@@ -2585,6 +2585,61 @@ describe('docx', () => {
     parseInt(majorUnitEl.getAttribute('val'), 10).should.be.eql(stepSizeConfig)
   })
 
+  it('chart should allow setting datalabels', async () => {
+    const labels = [0.7, 1.8, 2.6]
+
+    const datasets = [{
+      label: 'Ser1',
+      data: [2.7, 3.2, 0.8],
+      dataLabels: ['A1', {
+        value: 'B1',
+        position: 'left'
+      }, 'C1']
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'basic-scatter-chart-datalabels.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.should.have.length(1)
+
+    dataElements.forEach((dataEl, idx) => {
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(datasets[idx].label)
+
+      nodeListToArray(dataEl.getElementsByTagName('c:dLbls')[0].getElementsByTagName('dLbl')).should.matchEach((dataLabelEl, dlIdx) => {
+        let targetDataLabel = datasets[idx].dataLabels[dlIdx]
+
+        if (typeof targetDataLabel !== 'string') {
+          targetDataLabel = targetDataLabel.value
+        }
+
+        dataLabelEl.getElementsByTagName('c:tx')[0].getElementsByTagName('a:t')[0].textContent.should.be.eql(targetDataLabel)
+      })
+    })
+  })
+
   it('chart without style, color xml files', async () => {
     const labels = ['Q1', 'Q2', 'Q3', 'Q4']
     const datasets = [{
