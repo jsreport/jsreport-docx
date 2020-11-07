@@ -4071,6 +4071,137 @@ describe('docx', () => {
       }
     })
   })
+
+  it('raw', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'raw.docx'))
+          }
+        }
+      },
+      data: {
+        xmlRun: '<w:r><w:t>raw xml run</w:t></w:r>',
+        xmlInvalidRun: 'invalid xml run',
+        xmlParagraph: '<w:p><w:r><w:t>raw xml paragraph</w:t></w:r></w:p>',
+        xmlInvalidParagraph: 'invalid xml paragraph',
+        xmlTableCell: '<w:tc><w:p><w:r><w:t>raw xml table cell</w:t></w:r></w:p></w:tc>',
+        xmlInvalidTableCell: 'invalid xml table cell'
+      }
+    })
+
+    // Write document for easier debugging
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const generalTextElements = nodeListToArray(doc.getElementsByTagName('w:t'))
+
+    for (const textEl of generalTextElements) {
+      if (textEl.textContent.includes('raw xml run') || textEl.textContent.includes('invalid xml run')) {
+        should(textEl.parentNode.nodeName).eql('w:r')
+        should(textEl.parentNode.parentNode.nodeName).eql('w:p')
+        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:body')
+      }
+      if (textEl.textContent.includes('raw xml paragraph') || textEl.textContent.includes('invalid xml paragraph')) {
+        should(textEl.parentNode.nodeName).eql('w:r')
+        should(textEl.parentNode.parentNode.nodeName).eql('w:p')
+        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:body')
+      }
+      if (textEl.textContent.includes('raw xml table cell') || textEl.textContent.includes('invalid xml table cell')) {
+        should(textEl.parentNode.nodeName).eql('w:r')
+        should(textEl.parentNode.parentNode.nodeName).eql('w:p')
+        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:tc')
+        should(textEl.parentNode.parentNode.parentNode.parentNode.nodeName).eql('w:tr')
+      }
+    }
+  })
+
+  it('raw error no parameter', async () => {
+    const result = reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'raw-error-no-parameter.docx'))
+          }
+        }
+      },
+      data: {}
+    })
+
+    return Promise.all([
+      should(result).be.rejectedWith(/Expected "xml" and "replaceParentElement" parameters for the docxRaw helper/)
+    ])
+  })
+
+  it('raw error no xml parameter', async () => {
+    return reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'raw-error-no-xml-parameter.docx'))
+          }
+        }
+      },
+      data: {}
+    }).should.be.rejectedWith(/Expected "xml" and "replaceParentElement" parameters for the docxRaw helper/)
+  })
+
+  it('raw error no replaceParentElement parameter', async () => {
+    return reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'raw-error-no-replaceParentElement-parameter.docx'))
+          }
+        }
+      },
+      data: {}
+    }).should.be.rejectedWith(/Expected "xml" and "replaceParentElement" parameters for the docxRaw helper/)
+  })
+
+  it('raw error invalid replaceParentElement value', async () => {
+    return reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'raw-error-invalid-replaceParentElement-value.docx'))
+          }
+        }
+      },
+      data: {}
+    }).should.be.rejectedWith(/Expected a "replaceParentElement" parameter to be one of w:r,w:p,w:tc, got w:bad/)
+  })
+
+  it('raw error invalid wtc location', async () => {
+    return reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'raw-error-invalid-wtc-location.docx'))
+          }
+        }
+      },
+      data: {}
+    }).should.be.rejectedWith(/Reference element does not match replaceParentElement parameter, expected w:tc, got w:body/)
+  })
 })
 
 describe('docx with extensions.docx.previewInWordOnline === false', () => {
