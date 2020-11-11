@@ -16,11 +16,7 @@
     }
 
     // Wrap not valid XML data as a literal, without any style
-    switch (options.hash.replaceParentElement) {
-      case 'w:tc': return new Handlebars.SafeString('<w:tc><w:p><w:r><w:t>' + options.hash.xml + '</w:t></w:r></w:p></w:tc>')
-      case 'w:p': return new Handlebars.SafeString('<w:p><w:r><w:t>' + options.hash.xml + '</w:t></w:r></w:p>')
-      default: return new Handlebars.SafeString('<w:r><w:t>' + options.hash.xml + '</w:t></w:r>')
-    }
+    return new Handlebars.SafeString('<w:r><w:t>' + options.hash.xml + '</w:t></w:r>')
   }
 
   global.docxList = function (data, options) {

@@ -4104,24 +4104,52 @@ describe('docx', () => {
 
     const generalTextElements = nodeListToArray(doc.getElementsByTagName('w:t'))
 
+    const found = []
     for (const textEl of generalTextElements) {
-      if (textEl.textContent.includes('raw xml run') || textEl.textContent.includes('invalid xml run')) {
-        should(textEl.parentNode.nodeName).eql('w:r')
-        should(textEl.parentNode.parentNode.nodeName).eql('w:p')
-        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:body')
+      if (textEl.textContent.includes('raw xml run')) {
+        found.push(textEl.textContent)
+        should(textEl.parentNode.nodeName).eql('w:r', textEl.textContent)
+        should(textEl.parentNode.parentNode.nodeName).eql('w:p', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:body', textEl.textContent)
       }
-      if (textEl.textContent.includes('raw xml paragraph') || textEl.textContent.includes('invalid xml paragraph')) {
-        should(textEl.parentNode.nodeName).eql('w:r')
-        should(textEl.parentNode.parentNode.nodeName).eql('w:p')
-        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:body')
+      if (textEl.textContent.includes('invalid xml run')) {
+        found.push(textEl.textContent)
+        should(textEl.parentNode.nodeName).eql('w:r', textEl.textContent)
+        should(textEl.parentNode.parentNode.nodeName).eql('w:p', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:body', textEl.textContent)
       }
-      if (textEl.textContent.includes('raw xml table cell') || textEl.textContent.includes('invalid xml table cell')) {
-        should(textEl.parentNode.nodeName).eql('w:r')
-        should(textEl.parentNode.parentNode.nodeName).eql('w:p')
-        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:tc')
-        should(textEl.parentNode.parentNode.parentNode.parentNode.nodeName).eql('w:tr')
+      if (textEl.textContent.includes('raw xml paragraph')) {
+        found.push(textEl.textContent)
+        should(textEl.parentNode.nodeName).eql('w:r', textEl.textContent)
+        should(textEl.parentNode.parentNode.nodeName).eql('w:p', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:body', textEl.textContent)
+      }
+      if (textEl.textContent.includes('invalid xml paragraph')) {
+        found.push(textEl.textContent)
+        should(textEl.parentNode.nodeName).eql('w:r', textEl.textContent)
+        should(textEl.parentNode.parentNode.nodeName).eql('w:body', textEl.textContent)
+      }
+      if (textEl.textContent.includes('raw xml table cell')) {
+        found.push(textEl.textContent)
+        should(textEl.parentNode.nodeName).eql('w:r', textEl.textContent)
+        should(textEl.parentNode.parentNode.nodeName).eql('w:p', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:tc', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.parentNode.nodeName).eql('w:tr', textEl.textContent)
+      }
+      if (textEl.textContent.includes('invalid xml table cell')) {
+        found.push(textEl.textContent)
+        should(textEl.parentNode.nodeName).eql('w:r', textEl.textContent)
+        should(textEl.parentNode.parentNode.nodeName).eql('w:tr', textEl.textContent)
       }
     }
+    should(found).eql([
+      'raw xml run',
+      'invalid xml run',
+      'raw xml paragraph',
+      'invalid xml paragraph',
+      'raw xml table cell',
+      'invalid xml table cell'
+    ])
   })
 
   it('raw error no parameter', async () => {
@@ -4185,7 +4213,7 @@ describe('docx', () => {
         }
       },
       data: {}
-    }).should.be.rejectedWith(/Expected a "replaceParentElement" parameter to be one of w:r,w:p,w:tc, got w:bad/)
+    }).should.be.rejectedWith(/Could not find a reference element that matches the "replaceParentElement" parameter of the docxRaw helper in the document tree: w:bad/)
   })
 
   it('raw error invalid wtc location', async () => {
@@ -4200,7 +4228,7 @@ describe('docx', () => {
         }
       },
       data: {}
-    }).should.be.rejectedWith(/Reference element does not match replaceParentElement parameter, expected w:tc, got w:body/)
+    }).should.be.rejectedWith(/Could not find a reference element that matches the "replaceParentElement" parameter of the docxRaw helper in the document tree: w:tc/)
   })
 })
 
