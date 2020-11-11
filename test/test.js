@@ -4155,7 +4155,7 @@ describe('docx', () => {
         }
       },
       data: {}
-    }).should.be.rejectedWith(/Expected "xml" and "replaceParentElement" parameters for the docxRaw helper/)
+    }).should.be.rejectedWith(/Expected "xml" parameter for the docxRaw helper/)
   })
 
   it('raw error no replaceParentElement parameter', async () => {
@@ -4170,7 +4170,7 @@ describe('docx', () => {
         }
       },
       data: {}
-    }).should.be.rejectedWith(/Expected "xml" and "replaceParentElement" parameters for the docxRaw helper/)
+    }).should.be.rejectedWith(/Expected "replaceParentElement" parameter for the docxRaw helper/)
   })
 
   it('raw error invalid replaceParentElement value', async () => {
