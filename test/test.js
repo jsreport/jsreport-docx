@@ -1745,6 +1745,86 @@ describe('docx', () => {
     })
   })
 
+  it('image loop with bookmarks', async () => {
+    const imageBuf = fs.readFileSync(path.join(__dirname, 'cuzco1.jpg'))
+    const image2Buf = fs.readFileSync(path.join(__dirname, 'cuzco2.jpg'))
+
+    const data = {
+      rows: [{
+        title: 'one',
+        uri1: `data:image/png;base64,${imageBuf.toString('base64')}`,
+        uri2: `data:image/png;base64,${image2Buf.toString('base64')}`
+      }, {
+        title: 'two',
+        uri1: `data:image/png;base64,${imageBuf.toString('base64')}`,
+        uri2: `data:image/png;base64,${image2Buf.toString('base64')}`
+      }]
+    }
+
+    const images = [imageBuf, image2Buf, imageBuf, image2Buf]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'image-bookmark-loop.docx'))
+          }
+        }
+      },
+      data
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const docRels = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/_rels/document.xml.rels').data.toString()
+    )
+
+    const drawningEls = nodeListToArray(doc.getElementsByTagName('w:drawing'))
+
+    const bookmarkEls = nodeListToArray(doc.getElementsByTagName('w:bookmarkStart')).filter((el) => {
+      return el.getAttribute('w:name').startsWith('image')
+    })
+
+    should(drawningEls.length).be.eql(4)
+    should(bookmarkEls.length).be.eql(4)
+
+    drawningEls.forEach((drawningEl, idx) => {
+      const isImg = drawningEl.getElementsByTagName('pic:pic').length > 0
+
+      should(isImg).be.True()
+
+      const hyperlinkRelId = drawningEl.getElementsByTagName('wp:docPr')[0].getElementsByTagName('a:hlinkClick')[0].getAttribute('r:id')
+      const imageRelId = drawningEl.getElementsByTagName('a:blip')[0].getAttribute('r:embed')
+
+      const hyperlinkRelEl = nodeListToArray(docRels.getElementsByTagName('Relationship')).find((el) => {
+        return el.getAttribute('Id') === hyperlinkRelId
+      })
+
+      const imageRelEl = nodeListToArray(docRels.getElementsByTagName('Relationship')).find((el) => {
+        return el.getAttribute('Id') === imageRelId
+      })
+
+      should(hyperlinkRelEl.getAttribute('Type')).be.eql('http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink')
+      should(imageRelEl.getAttribute('Type')).be.eql('http://schemas.openxmlformats.org/officeDocument/2006/relationships/image')
+
+      const imageFile = files.find(f => f.path === `word/${imageRelEl.getAttribute('Target')}`)
+
+      // compare returns 0 when buffers are equal
+      Buffer.compare(imageFile.data, images[idx]).should.be.eql(0)
+
+      should(hyperlinkRelEl.getAttribute('Target')).be.eql(`#${bookmarkEls[idx].getAttribute('w:name')}`)
+    })
+  })
+
   it('loop', async () => {
     const result = await reporter.render({
       template: {
