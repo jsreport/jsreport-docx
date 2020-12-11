@@ -10,7 +10,7 @@
 
   global.docxRaw = function (options) {
     if (typeof options.hash.xml === 'string') {
-      if (options.hash.xml.startsWith('<' + options.hash.replaceParentElement)) {
+      if (options.hash.xml.startsWith('<')) {
         return new Handlebars.SafeString(options.hash.xml)
       }
     }
