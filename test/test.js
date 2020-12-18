@@ -4169,7 +4169,9 @@ describe('docx', () => {
         xmlParagraph: '<w:p><w:r><w:t>raw xml paragraph</w:t></w:r></w:p>',
         xmlInvalidParagraph: 'invalid xml paragraph',
         xmlTableCell: '<w:tc><w:p><w:r><w:t>raw xml table cell</w:t></w:r></w:p></w:tc>',
-        xmlInvalidTableCell: 'invalid xml table cell'
+        xmlInvalidTableCell: 'invalid xml table cell',
+        xmlTable: '<w:tbl><w:tr><w:tc><w:p><w:r><w:t>raw xml full table</w:t></w:r></w:p></w:tc></w:tr></w:tbl>',
+        xmlInvalidTable: 'invalid xml full table'
       }
     })
 
@@ -4215,11 +4217,27 @@ describe('docx', () => {
         should(textEl.parentNode.parentNode.nodeName).eql('w:p', textEl.textContent)
         should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:tc', textEl.textContent)
         should(textEl.parentNode.parentNode.parentNode.parentNode.nodeName).eql('w:tr', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName).eql('w:tbl', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName).eql('w:body', textEl.textContent)
       }
       if (textEl.textContent.includes('invalid xml table cell')) {
         found.push(textEl.textContent)
         should(textEl.parentNode.nodeName).eql('w:r', textEl.textContent)
         should(textEl.parentNode.parentNode.nodeName).eql('w:tr', textEl.textContent)
+      }
+      if (textEl.textContent.includes('raw xml full table')) {
+        found.push(textEl.textContent)
+        should(textEl.parentNode.nodeName).eql('w:r', textEl.textContent)
+        should(textEl.parentNode.parentNode.nodeName).eql('w:p', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.nodeName).eql('w:tc', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.parentNode.nodeName).eql('w:tr', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName).eql('w:tbl', textEl.textContent)
+        should(textEl.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName).eql('w:body', textEl.textContent)
+      }
+      if (textEl.textContent.includes('invalid xml full table')) {
+        found.push(textEl.textContent)
+        should(textEl.parentNode.nodeName).eql('w:r', textEl.textContent)
+        should(textEl.parentNode.parentNode.nodeName).eql('w:body', textEl.textContent)
       }
     }
     should(found).eql([
@@ -4228,7 +4246,9 @@ describe('docx', () => {
       'raw xml paragraph',
       'invalid xml paragraph',
       'raw xml table cell',
-      'invalid xml table cell'
+      'invalid xml table cell',
+      'raw xml full table',
+      'invalid xml full table'
     ])
   })
 
