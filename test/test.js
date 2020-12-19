@@ -73,7 +73,11 @@ describe('docx', () => {
     return reporter.init()
   })
 
-  afterEach(() => reporter.close())
+  afterEach(async () => {
+    if (reporter) {
+      await reporter.close()
+    }
+  })
 
   it('condition-with-helper-call', async () => {
     const result = await reporter.render({
@@ -3876,6 +3880,84 @@ describe('docx', () => {
     paragraphNodes[0].getElementsByTagName('w:br').should.have.length(1)
     paragraphNodes[0]
       .getElementsByTagName('w:t')[1]
+      .textContent.should.be.eql('break')
+  })
+
+  it('page break in single paragraph with condition', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(
+              path.join(__dirname, 'page-break-single-paragraph-with-condition.docx')
+            )
+          }
+        }
+      },
+      data: {}
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const paragraphNodes = nodeListToArray(doc.getElementsByTagName('w:p'))
+
+    paragraphNodes[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('Demo')
+
+    paragraphNodes[0].getElementsByTagName('w:br').length.should.be.eql(1)
+
+    paragraphNodes[0]
+      .getElementsByTagName('w:t')[1]
+      .textContent.should.be.eql('break')
+  })
+
+  it('page break in single paragraph with condition #2', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(
+              path.join(__dirname, 'page-break-single-paragraph-with-condition2.docx')
+            )
+          }
+        }
+      },
+      data: {}
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const paragraphNodes = nodeListToArray(doc.getElementsByTagName('w:p'))
+
+    paragraphNodes[0]
+      .getElementsByTagName('w:t')[0]
+      .textContent.should.be.eql('Demo')
+
+    paragraphNodes[0].getElementsByTagName('w:br').length.should.be.eql(1)
+
+    paragraphNodes[0]
+      .getElementsByTagName('w:t')[1]
+      .textContent.should.be.eql(' ')
+
+    paragraphNodes[0]
+      .getElementsByTagName('w:t')[2]
       .textContent.should.be.eql('break')
   })
 
