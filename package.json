@@ -1,6 +1,6 @@
 {
   "name": "jsreport-docx",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "description": "jsreport recipe rendering docx files",
   "homepage": "https://github.com/jsreport/jsreport-docx",
   "repository": {
