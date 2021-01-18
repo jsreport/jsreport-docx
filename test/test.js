@@ -4412,6 +4412,40 @@ describe('docx', () => {
       data: {}
     }).should.be.rejectedWith(/Could not find a reference element that matches the "replaceParentElement" parameter of the docxRaw helper in the document tree: w:tc/)
   })
+
+  it('shape with textbox enclosed in if block', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'shape-in-if.docx'))
+          }
+        }
+      },
+      data: {
+        key: 'value'
+      }
+    })
+
+    // Write document for easier debugging
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/document.xml').data.toString()
+    )
+
+    const graphicDataElements = nodeListToArray(doc.getElementsByTagName('a:graphicData'))
+    graphicDataElements.length.should.be.eql(1)
+    should(graphicDataElements[0].parentNode.nodeName).be.eql('a:graphic')
+
+    const textElements = nodeListToArray(doc.getElementsByTagName('w:t'))
+    textElements.length.should.be.eql(2)
+    should(textElements[0].textContent).be.eql('value')
+  })
 })
 
 describe('docx with extensions.docx.previewInWordOnline === false', () => {
