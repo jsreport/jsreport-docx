@@ -156,6 +156,33 @@ describe('docx', () => {
     text.should.containEql('Hello world John')
   })
 
+  it('variable-replace should remove NUL unicode character', async () => {
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(
+              path.join(__dirname, 'variable-replace.docx')
+            )
+          }
+        }
+      },
+      data: {
+        name: 'Jan\u0000'
+      }
+    })
+
+    fs.writeFileSync('out.docx', result.content)
+
+    const files = await decompress()(result.content)
+
+    const doc = files.find(f => f.path === 'word/document.xml').data.toString()
+
+    doc.indexOf('\u0000').should.be.eql(-1)
+  })
+
   it('variable-replace-multi', async () => {
     const result = await reporter.render({
       template: {
