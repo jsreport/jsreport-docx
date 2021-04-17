@@ -2739,7 +2739,9 @@ describe('docx', () => {
     dataElements.forEach((dataEl, idx) => {
       dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(datasets[idx].label)
 
-      nodeListToArray(dataEl.getElementsByTagName('c:dLbls')[0].getElementsByTagName('dLbl')).should.matchEach((dataLabelEl, dlIdx) => {
+      let dlIdx = 0
+
+      nodeListToArray(dataEl.getElementsByTagName('c:dLbls')[0].getElementsByTagName('dLbl')).should.matchEach((dataLabelEl) => {
         let targetDataLabel = datasets[idx].dataLabels[dlIdx]
 
         if (typeof targetDataLabel !== 'string') {
@@ -2747,6 +2749,67 @@ describe('docx', () => {
         }
 
         dataLabelEl.getElementsByTagName('c:tx')[0].getElementsByTagName('a:t')[0].textContent.should.be.eql(targetDataLabel)
+
+        dlIdx++
+      })
+    })
+  })
+
+  it('chart should allow setting error bar values', async () => {
+    const labels = ['Category1', 'Category2', 'Category3', 'Category4']
+
+    const datasets = [{
+      label: 'Data',
+      data: [4.3, 2.5, 3.5, 4.5],
+      // 0 index is for positive value and 1 index is for the negative value
+      dataErrors: [[6, 3], [3, 2], [7, 2], [3, 1]]
+    }]
+
+    const result = await reporter.render({
+      template: {
+        engine: 'handlebars',
+        recipe: 'docx',
+        docx: {
+          templateAsset: {
+            content: fs.readFileSync(path.join(__dirname, 'chart-general-dataerrors.docx'))
+          }
+        }
+      },
+      data: {
+        chartData: {
+          labels,
+          datasets
+        }
+      }
+    })
+
+    const files = await decompress()(result.content)
+
+    const doc = new DOMParser().parseFromString(
+      files.find(f => f.path === 'word/charts/chart1.xml').data.toString()
+    )
+
+    const dataElements = nodeListToArray(doc.getElementsByTagName('c:ser'))
+
+    dataElements.should.have.length(1)
+
+    dataElements.forEach((dataEl, idx) => {
+      dataEl.getElementsByTagName('c:tx')[0].getElementsByTagName('c:v')[0].textContent.should.be.eql(datasets[idx].label)
+
+      let vPlusIdx = 0
+
+      nodeListToArray(dataEl.getElementsByTagName('c:errBars')[0].getElementsByTagName('c:plus')[0].getElementsByTagName('c:v')).should.matchEach((vEl) => {
+        const targetValue = datasets[idx].dataErrors[vPlusIdx][0]
+        parseInt(vEl.textContent, 10).should.be.eql(targetValue)
+        vPlusIdx++
+      })
+
+      let vMinusIdx = 0
+
+      nodeListToArray(dataEl.getElementsByTagName('c:errBars')[0].getElementsByTagName('c:minus')[0].getElementsByTagName('c:v')).should.matchEach((vEl) => {
+        const targetValue = datasets[idx].dataErrors[vMinusIdx][1]
+        parseInt(vEl.textContent, 10).should.be.eql(targetValue)
+        vMinusIdx++
       })
     })
   })
