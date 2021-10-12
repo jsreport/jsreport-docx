@@ -2,50 +2,46 @@
   "name": "jsreport-docx",
   "version": "2.10.1",
   "description": "jsreport recipe rendering docx files",
+  "keywords": [
+    "jsreport",
+    "docx"
+  ],
   "homepage": "https://github.com/jsreport/jsreport-docx",
   "repository": {
     "type": "git",
     "url": "git@github.com:jsreport/jsreport-docx.git"
   },
+  "license": "MIT",
   "author": {
     "name": "Jan Blaha",
     "email": "jan.blaha@hotmail.com"
   },
-  "contributos": [
+  "contributors": [
     "BJR Matos <bjrmatos@gmail.com> (https://github.com/bjrmatos)"
   ],
-  "keywords": [
-    "jsreport",
-    "docx"
+  "files": [
+    "lib",
+    "studio",
+    "index.js",
+    "jsreport.config.js",
+    "static"
   ],
   "scripts": {
-    "start": "jsreport-studio-start --httpPort 4000",
-    "test": "mocha test --timeout 8000 && standard",
     "build": "jsreport-studio-build",
-    "prepublishOnly": "jsreport-studio-build"
+    "prepublishOnly": "jsreport-studio-build",
+    "start": "jsreport-studio-start --httpPort 4000",
+    "test": "mocha test --timeout 8000 && standard"
   },
-  "standard": {
-    "ignore": [
-      "main.js"
-    ],
-    "parser": "babel-eslint",
-    "env": {
-      "node": true,
-      "mocha": true,
-      "browser": true
-    }
-  },
-  "license": "MIT",
   "dependencies": {
-    "@xmldom/xmldom": "0.7.5",
-    "axios": "0.22.0",
+    "axios": "0.19.2",
     "image-size": "0.7.4",
     "js-excel-date-convert": "1.0.2",
-    "jsreport-office": "1.2.2",
+    "jsreport-office": "1.2.3",
     "moment": "2.27.0",
     "semaphore-async-await": "1.5.1",
     "string-replace-async": "2.0.0",
-    "unescape": "1.0.1"
+    "unescape": "1.0.1",
+    "xmldom": "0.1.27"
   },
   "devDependencies": {
     "babel-eslint": "10.0.2",
@@ -63,14 +59,18 @@
     "standard": "12.0.1",
     "textract": "2.5.0"
   },
-  "files": [
-    "lib",
-    "studio",
-    "index.js",
-    "jsreport.config.js",
-    "static"
-  ],
   "engines": {
     "node": ">=8.9"
+  },
+  "standard": {
+    "ignore": [
+      "main.js"
+    ],
+    "parser": "babel-eslint",
+    "env": {
+      "node": true,
+      "mocha": true,
+      "browser": true
+    }
   }
 }
